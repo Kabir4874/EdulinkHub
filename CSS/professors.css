@@ -1,0 +1,344 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+body {
+  background-color: #f9f9fb;
+  color: #333;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+ul {
+  list-style: none;
+}
+
+/* Navbar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 80px;
+  background: linear-gradient(135deg, #6a82fb, #fc5c7d);
+  color: white;
+  position: sticky;
+  top: 0;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+/* Enhanced Logo Container */
+.logo {
+  display: flex;
+  align-items: center;
+  height: 70px; /* More reasonable size */
+  transition: all 0.3s ease;
+}
+
+.logo-img {
+  height: 100%;
+  width: auto;
+  max-width: 200px; /* Prevents over-scaling */
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Logo Hover Effects */
+.logo:hover .logo-img {
+  transform: scale(1.03);
+  opacity: 0.95;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+}
+
+/* Click Feedback */
+.logo:active .logo-img {
+  transform: scale(0.98);
+}
+
+/* Responsive Logo */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 12px 30px;
+  }
+  
+  .logo {
+    height: 50px;
+  }
+  
+  .logo-img {
+    max-width: 160px;
+  }
+}
+
+/* Navigation Links (unchanged) */
+.nav-links {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+}
+
+.nav-links li {
+  position: relative;
+}
+
+.nav-links a {
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  padding: 10px 15px;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  border-radius: 4px;
+}
+
+.nav-links a::before {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.nav-links a:hover {
+  color: white;
+  transform: translateY(-10px);
+  text-shadow: 0 2px 8px rgba(255, 255, 255, 0.6);
+}
+
+.nav-links a:hover::before {
+  width: 80%;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+/* Active link effect */
+.nav-links a.active {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  padding: 8px 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Dropdown Menu (unchanged) */
+.dropdown-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-auto-rows: auto;
+  gap: 10px;
+  padding: 10px 15px;
+  position: absolute;
+  top: 35px;
+  left: 0;
+  background: white;
+  min-width: 300px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  border-radius: 5px;
+  z-index: 99;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: all 0.3s ease;
+}
+
+.dropdown-content li a {
+  color: #333;
+  padding: 10px 15px;
+  display: block;
+  font-weight: 400;
+  transition: background 0.2s ease;
+}
+
+.dropdown-content li a:hover {
+  background: #4f4f94;
+  color: white;
+  top: 12px;
+}
+
+.dropdown:hover .dropdown-content {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown {
+  position: relative;
+}
+
+.dropdown-content::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 15px;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 5px solid white;
+}
+/* Profile */
+.user-profile {
+  position: relative;
+  cursor: pointer;
+}
+
+.profile-pic {
+  height: 40px;
+  width: 40px;
+  border-radius: 50%; /* Make it round */
+  border: 2px solid white;
+  object-fit: cover;
+}
+
+.user-dropdown {
+  display: none;
+  position: absolute;
+  top: 50px;
+  right: 0;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  min-width: 160px;
+  z-index: 100;
+}
+
+.user-dropdown a {
+  padding: 10px 15px;
+  display: block;
+  color: #333;
+  text-decoration: none;
+}
+
+.user-dropdown a:hover {
+  background: #f0f0f0;
+}
+
+.user-profile.active .user-dropdown {
+  display: block;
+}
+
+
+/* Hero Section */
+.admission-hero {
+  background-image: url('../images/professor.webp'); /* Replace with your image path */
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  height: 130vh;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 0 50px;
+}
+.admission-hero::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.55); /* dark overlay for readability */
+  z-index: 1;
+}
+.admission-content {
+  position: relative;
+  z-index: 2;
+  max-width: 800px;
+}
+
+
+.admission-content h1 {
+  font-size: 36px;
+  margin-bottom: 10px;
+}
+
+.admission-content p {
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+/* Container */
+.container {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 0 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+/* Professor Cards */
+.university-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+  text-align: center;
+}
+
+.university-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.university-card h2 {
+  font-size: 20px;
+  margin: 10px 0;
+  color: #004080;
+}
+
+.university-card p {
+  font-size: 14px;
+  margin: 5px 0;
+}
+
+.prof-pic {
+  width: 100%;
+  max-width: 180px;
+  height: auto;
+  border-radius: 10px;
+  margin: 0 auto 10px auto;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* Footer */
+.footer {
+  background: linear-gradient(to right, #7e3ff2, #dc5aba);
+  color: white;
+  text-align: center;
+  padding: 20px;
+  margin-top: 40px;
+}
+
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .nav-links {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .dropdown-content {
+    position: static;
+  }
+
+  .admission-hero {
+    padding: 50px 20px;
+  }
+
+  .admission-content h1 {
+    font-size: 28px;
+  }
+}
