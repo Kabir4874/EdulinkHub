@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Professor List - Admin</title>
+    <title>Scholarship List - Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -48,6 +48,46 @@
             margin: 0 auto;
         }
 
+        /* Search and Filter Section */
+        .search-filter-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px 12px 45px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 1rem;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+
+        .filter-dropdown {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 1rem;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
         /* Loading Indicator */
         .loading-container {
             display: flex;
@@ -71,8 +111,8 @@
             }
         }
 
-        /* Professor Card */
-        .professor-card {
+        /* Scholarship Card */
+        .scholarship-card {
             background-color: var(--card-bg);
             border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
@@ -81,7 +121,7 @@
             transition: transform 0.3s, box-shadow 0.3s;
         }
 
-        .professor-card:hover {
+        .scholarship-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         }
@@ -92,15 +132,7 @@
             margin-bottom: 15px;
         }
 
-        .professor-image {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-right: 15px;
-        }
-
-        .image-placeholder {
+        .scholarship-icon {
             width: 60px;
             height: 60px;
             border-radius: 50%;
@@ -109,20 +141,21 @@
             align-items: center;
             justify-content: center;
             margin-right: 15px;
-            color: #999;
+            color: var(--primary-color);
+            font-size: 1.5rem;
         }
 
-        .professor-info {
+        .scholarship-info {
             flex: 1;
         }
 
-        .professor-name {
+        .scholarship-title {
             font-weight: bold;
             font-size: 1.1rem;
             margin-bottom: 5px;
         }
 
-        .professor-title {
+        .scholarship-university {
             color: #666;
             font-size: 0.9rem;
         }
@@ -162,22 +195,23 @@
             color: #555;
         }
 
-        .availability-badge {
+        .type-badge {
             display: inline-block;
             padding: 3px 8px;
             border-radius: 12px;
             font-size: 0.8rem;
             font-weight: 500;
+            margin-left: 8px;
         }
 
-        .available {
+        .scholarship-badge {
             background-color: #e8f5e9;
             color: #2e7d32;
         }
 
-        .not-available {
-            background-color: #ffebee;
-            color: #c62828;
+        .professor-badge {
+            background-color: #e3f2fd;
+            color: #1565c0;
         }
 
         /* Empty State */
@@ -192,29 +226,64 @@
             margin-bottom: 15px;
             color: #ccc;
         }
+
+        /* Responsive */
+        @media (min-width: 768px) {
+            .search-filter-container {
+                flex-direction: row;
+                gap: 16px;
+            }
+
+            .search-box {
+                flex: 3;
+            }
+
+            .filter-dropdown {
+                flex: 1;
+            }
+        }
     </style>
 </head>
 
 <body>
     <!-- App Bar -->
     <div class="app-bar">
-        <h1>Professor List</h1>
+        <h1>Scholarship List</h1>
     </div>
     <!-- Main Content -->
     <div class="content">
+        <!-- Search and Filter Section -->
+        <div class="search-filter-container">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search Scholarships...">
+            </div>
+            <select class="filter-dropdown">
+                <option value="all">All Types</option>
+                <option value="scholarship">Scholarship</option>
+                <option value="professor">Professor</option>
+            </select>
+        </div>
+
         <!-- Loading State -->
         <div class="loading-container" id="loadingIndicator">
             <div class="loading-spinner"></div>
         </div>
-        <!-- Professor List -->
-        <div id="professorList" style="display: none;">
-            <!-- Sample Professor Card 1 -->
-            <div class="professor-card">
+
+        <!-- Scholarship List -->
+        <div id="scholarshipList" style="display: none;">
+            <!-- Sample Scholarship Card 1 -->
+            <div class="scholarship-card">
                 <div class="card-header">
-                    <img src="https://via.placeholder.com/60" alt="Professor" class="professor-image">
-                    <div class="professor-info">
-                        <div class="professor-name">Dr. Robert Johnson</div>
-                        <div class="professor-title">Computer Science Department</div>
+                    <div class="scholarship-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div class="scholarship-info">
+                        <div class="scholarship-title">
+                            Merit Scholarship Program
+                            <span class="type-badge scholarship-badge">Scholarship</span>
+                        </div>
+                        <div class="scholarship-university">Harvard University</div>
                     </div>
                     <div class="action-buttons">
                         <button class="action-btn edit-btn">
@@ -227,33 +296,35 @@
                 </div>
                 <div class="card-details">
                     <div class="detail-row">
-                        <span class="detail-label">Research Interests:</span> Artificial Intelligence, Machine Learning, Data Science
+                        <span class="detail-label">Department:</span> Computer Science
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Email:</span> robert.johnson@university.edu
+                        <span class="detail-label">Apply Date:</span> 10/15/2023
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Phone:</span> (555) 123-4567
+                        <span class="detail-label">Deadline:</span> 12/01/2023
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Availability:</span>
-                        <span class="availability-badge available">Available</span>
+                        <span class="detail-label">Description:</span> Full tuition scholarship for outstanding students in Computer Science.
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Profile:</span>
-                        <a href="#" style="color: #4285f4;">View Profile</a>
+                        <span class="detail-label">Eligibility:</span> Minimum GPA of 3.8, demonstrated leadership skills.
                     </div>
                 </div>
             </div>
-            <!-- Sample Professor Card 2 -->
-            <div class="professor-card">
+
+            <!-- Sample Scholarship Card 2 -->
+            <div class="scholarship-card">
                 <div class="card-header">
-                    <div class="image-placeholder">
+                    <div class="scholarship-icon">
                         <i class="fas fa-user-tie"></i>
                     </div>
-                    <div class="professor-info">
-                        <div class="professor-name">Dr. Emily Davis</div>
-                        <div class="professor-title">Business Administration Department</div>
+                    <div class="scholarship-info">
+                        <div class="scholarship-title">
+                            Research Assistant Position
+                            <span class="type-badge professor-badge">Professor</span>
+                        </div>
+                        <div class="scholarship-university">Stanford University</div>
                     </div>
                     <div class="action-buttons">
                         <button class="action-btn edit-btn">
@@ -266,31 +337,35 @@
                 </div>
                 <div class="card-details">
                     <div class="detail-row">
-                        <span class="detail-label">Research Interests:</span> Marketing, Consumer Behavior, Brand Management
+                        <span class="detail-label">Department:</span> Artificial Intelligence
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Email:</span> emily.davis@university.edu
+                        <span class="detail-label">Apply Date:</span> 11/01/2023
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Phone:</span> (555) 987-6543
+                        <span class="detail-label">Deadline:</span> 01/15/2024
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Availability:</span>
-                        <span class="availability-badge not-available">Not Available</span>
+                        <span class="detail-label">Description:</span> Research assistant position for AI research projects with monthly stipend.
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Profile:</span>
-                        <a href="#" style="color: #4285f4;">View Profile</a>
+                        <span class="detail-label">Eligibility:</span> Graduate students with background in Machine Learning.
                     </div>
                 </div>
             </div>
-            <!-- Sample Professor Card 3 -->
-            <div class="professor-card">
+
+            <!-- Sample Scholarship Card 3 -->
+            <div class="scholarship-card">
                 <div class="card-header">
-                    <img src="https://via.placeholder.com/60" alt="Professor" class="professor-image">
-                    <div class="professor-info">
-                        <div class="professor-name">Dr. Michael Wilson</div>
-                        <div class="professor-title">Engineering Department</div>
+                    <div class="scholarship-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div class="scholarship-info">
+                        <div class="scholarship-title">
+                            International Student Scholarship
+                            <span class="type-badge scholarship-badge">Scholarship</span>
+                        </div>
+                        <div class="scholarship-university">MIT</div>
                     </div>
                     <div class="action-buttons">
                         <button class="action-btn edit-btn">
@@ -303,33 +378,35 @@
                 </div>
                 <div class="card-details">
                     <div class="detail-row">
-                        <span class="detail-label">Research Interests:</span> Renewable Energy, Sustainable Design, Environmental Engineering
+                        <span class="detail-label">Department:</span> Engineering
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Email:</span> michael.wilson@university.edu
+                        <span class="detail-label">Apply Date:</span> 09/15/2023
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Phone:</span> (555) 456-7890
+                        <span class="detail-label">Deadline:</span> 11/30/2023
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Availability:</span>
-                        <span class="availability-badge available">Available</span>
+                        <span class="detail-label">Description:</span> Partial scholarship for international students pursuing graduate degrees.
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Profile:</span>
-                        <a href="#" style="color: #4285f4;">View Profile</a>
+                        <span class="detail-label">Eligibility:</span> Non-US citizens with strong academic record.
                     </div>
                 </div>
             </div>
-            <!-- Sample Professor Card 4 -->
-            <div class="professor-card">
+
+            <!-- Sample Scholarship Card 4 -->
+            <div class="scholarship-card">
                 <div class="card-header">
-                    <div class="image-placeholder">
+                    <div class="scholarship-icon">
                         <i class="fas fa-user-tie"></i>
                     </div>
-                    <div class="professor-info">
-                        <div class="professor-name">Dr. Sarah Thompson</div>
-                        <div class="professor-title">Psychology Department</div>
+                    <div class="scholarship-info">
+                        <div class="scholarship-title">
+                            Teaching Assistant Position
+                            <span class="type-badge professor-badge">Professor</span>
+                        </div>
+                        <div class="scholarship-university">University of California, Berkeley</div>
                     </div>
                     <div class="action-buttons">
                         <button class="action-btn edit-btn">
@@ -342,31 +419,35 @@
                 </div>
                 <div class="card-details">
                     <div class="detail-row">
-                        <span class="detail-label">Research Interests:</span> Cognitive Psychology, Behavioral Neuroscience, Mental Health
+                        <span class="detail-label">Department:</span> Business Administration
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Email:</span> sarah.thompson@university.edu
+                        <span class="detail-label">Apply Date:</span> 10/01/2023
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Phone:</span> (555) 234-5678
+                        <span class="detail-label">Deadline:</span> 12/15/2023
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Availability:</span>
-                        <span class="availability-badge available">Available</span>
+                        <span class="detail-label">Description:</span> Teaching assistant position for undergraduate business courses with tuition waiver.
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Profile:</span>
-                        <a href="#" style="color: #4285f4;">View Profile</a>
+                        <span class="detail-label">Eligibility:</span> MBA students with excellent communication skills.
                     </div>
                 </div>
             </div>
-            <!-- Sample Professor Card 5 -->
-            <div class="professor-card">
+
+            <!-- Sample Scholarship Card 5 -->
+            <div class="scholarship-card">
                 <div class="card-header">
-                    <img src="https://via.placeholder.com/60" alt="Professor" class="professor-image">
-                    <div class="professor-info">
-                        <div class="professor-name">Dr. James Anderson</div>
-                        <div class="professor-title">History Department</div>
+                    <div class="scholarship-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div class="scholarship-info">
+                        <div class="scholarship-title">
+                            Women in STEM Scholarship
+                            <span class="type-badge scholarship-badge">Scholarship</span>
+                        </div>
+                        <div class="scholarship-university">Carnegie Mellon University</div>
                     </div>
                     <div class="action-buttons">
                         <button class="action-btn edit-btn">
@@ -379,33 +460,35 @@
                 </div>
                 <div class="card-details">
                     <div class="detail-row">
-                        <span class="detail-label">Research Interests:</span> Ancient Civilizations, Medieval History, Cultural Anthropology
+                        <span class="detail-label">Department:</span> Robotics
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Email:</span> james.anderson@university.edu
+                        <span class="detail-label">Apply Date:</span> 11/15/2023
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Phone:</span> (555) 345-6789
+                        <span class="detail-label">Deadline:</span> 01/31/2024
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Availability:</span>
-                        <span class="availability-badge not-available">Not Available</span>
+                        <span class="detail-label">Description:</span> Full scholarship for women pursuing degrees in Robotics and related fields.
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Profile:</span>
-                        <a href="#" style="color: #4285f4;">View Profile</a>
+                        <span class="detail-label">Eligibility:</span> Female students with strong academic background in STEM.
                     </div>
                 </div>
             </div>
-            <!-- Sample Professor Card 6 -->
-            <div class="professor-card">
+
+            <!-- Sample Scholarship Card 6 -->
+            <div class="scholarship-card">
                 <div class="card-header">
-                    <div class="image-placeholder">
+                    <div class="scholarship-icon">
                         <i class="fas fa-user-tie"></i>
                     </div>
-                    <div class="professor-info">
-                        <div class="professor-name">Dr. Lisa Chen</div>
-                        <div class="professor-title">Mathematics Department</div>
+                    <div class="scholarship-info">
+                        <div class="scholarship-title">
+                            Postdoctoral Research Fellowship
+                            <span class="type-badge professor-badge">Professor</span>
+                        </div>
+                        <div class="scholarship-university">Princeton University</div>
                     </div>
                     <div class="action-buttons">
                         <button class="action-btn edit-btn">
@@ -418,39 +501,39 @@
                 </div>
                 <div class="card-details">
                     <div class="detail-row">
-                        <span class="detail-label">Research Interests:</span> Applied Mathematics, Statistical Analysis, Computational Modeling
+                        <span class="detail-label">Department:</span> Physics
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Email:</span> lisa.chen@university.edu
+                        <span class="detail-label">Apply Date:</span> 09/01/2023
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Phone:</span> (555) 567-8901
+                        <span class="detail-label">Deadline:</span> 11/01/2023
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Availability:</span>
-                        <span class="availability-badge available">Available</span>
+                        <span class="detail-label">Description:</span> Two-year postdoctoral fellowship with competitive salary and research funding.
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Profile:</span>
-                        <a href="#" style="color: #4285f4;">View Profile</a>
+                        <span class="detail-label">Eligibility:</span> Recent PhD graduates in Physics or related fields.
                     </div>
                 </div>
             </div>
         </div>
+
         <!-- Empty State (hidden by default) -->
         <div class="empty-state" id="emptyState" style="display: none;">
             <div class="empty-icon">
-                <i class="fas fa-user-tie"></i>
+                <i class="fas fa-graduation-cap"></i>
             </div>
-            <h3>No Professors Found</h3>
-            <p>There are currently no professors in the system.</p>
+            <h3>No Scholarships Found</h3>
+            <p>There are currently no scholarships listed in the system.</p>
         </div>
     </div>
+
     <script>
         // Simulate loading data
         setTimeout(() => {
             document.getElementById('loadingIndicator').style.display = 'none';
-            document.getElementById('professorList').style.display = 'block';
+            document.getElementById('scholarshipList').style.display = 'block';
             // To show empty state instead, you would use:
             // document.getElementById('emptyState').style.display = 'block';
         }, 1500);

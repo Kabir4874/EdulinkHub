@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Professor List - Admin</title>
+    <title>Book List - Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -71,8 +71,8 @@
             }
         }
 
-        /* Professor Card */
-        .professor-card {
+        /* Book Card */
+        .book-card {
             background-color: var(--card-bg);
             border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
@@ -81,7 +81,7 @@
             transition: transform 0.3s, box-shadow 0.3s;
         }
 
-        .professor-card:hover {
+        .book-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         }
@@ -92,10 +92,10 @@
             margin-bottom: 15px;
         }
 
-        .professor-image {
+        .book-image {
             width: 60px;
             height: 60px;
-            border-radius: 50%;
+            border-radius: 8px;
             object-fit: cover;
             margin-right: 15px;
         }
@@ -103,7 +103,7 @@
         .image-placeholder {
             width: 60px;
             height: 60px;
-            border-radius: 50%;
+            border-radius: 8px;
             background-color: #f0f0f0;
             display: flex;
             align-items: center;
@@ -112,17 +112,17 @@
             color: #999;
         }
 
-        .professor-info {
+        .book-info {
             flex: 1;
         }
 
-        .professor-name {
+        .book-title {
             font-weight: bold;
             font-size: 1.1rem;
             margin-bottom: 5px;
         }
 
-        .professor-title {
+        .book-author {
             color: #666;
             font-size: 0.9rem;
         }
@@ -162,24 +162,6 @@
             color: #555;
         }
 
-        .availability-badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-
-        .available {
-            background-color: #e8f5e9;
-            color: #2e7d32;
-        }
-
-        .not-available {
-            background-color: #ffebee;
-            color: #c62828;
-        }
-
         /* Empty State */
         .empty-state {
             text-align: center;
@@ -198,7 +180,7 @@
 <body>
     <!-- App Bar -->
     <div class="app-bar">
-        <h1>Professor List</h1>
+        <h1>Book List</h1>
     </div>
     <!-- Main Content -->
     <div class="content">
@@ -206,15 +188,15 @@
         <div class="loading-container" id="loadingIndicator">
             <div class="loading-spinner"></div>
         </div>
-        <!-- Professor List -->
-        <div id="professorList" style="display: none;">
-            <!-- Sample Professor Card 1 -->
-            <div class="professor-card">
+        <!-- Book List -->
+        <div id="bookList" style="display: none;">
+            <!-- Sample Book Card 1 -->
+            <div class="book-card">
                 <div class="card-header">
-                    <img src="https://via.placeholder.com/60" alt="Professor" class="professor-image">
-                    <div class="professor-info">
-                        <div class="professor-name">Dr. Robert Johnson</div>
-                        <div class="professor-title">Computer Science Department</div>
+                    <img src="https://via.placeholder.com/60" alt="Book Cover" class="book-image">
+                    <div class="book-info">
+                        <div class="book-title">Introduction to Flutter</div>
+                        <div class="book-author">John Doe</div>
                     </div>
                     <div class="action-buttons">
                         <button class="action-btn edit-btn">
@@ -227,33 +209,28 @@
                 </div>
                 <div class="card-details">
                     <div class="detail-row">
-                        <span class="detail-label">Research Interests:</span> Artificial Intelligence, Machine Learning, Data Science
+                        <span class="detail-label">Category:</span> Programming
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Email:</span> robert.johnson@university.edu
+                        <span class="detail-label">Price:</span> $29.99
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Phone:</span> (555) 123-4567
+                        <span class="detail-label">Description:</span> A comprehensive guide to Flutter development for beginners and intermediate developers.
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Availability:</span>
-                        <span class="availability-badge available">Available</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Profile:</span>
-                        <a href="#" style="color: #4285f4;">View Profile</a>
+                        <span class="detail-label">Suggested For:</span> Developers, Students, Tech Enthusiasts
                     </div>
                 </div>
             </div>
-            <!-- Sample Professor Card 2 -->
-            <div class="professor-card">
+            <!-- Sample Book Card 2 -->
+            <div class="book-card">
                 <div class="card-header">
                     <div class="image-placeholder">
-                        <i class="fas fa-user-tie"></i>
+                        <i class="fas fa-book"></i>
                     </div>
-                    <div class="professor-info">
-                        <div class="professor-name">Dr. Emily Davis</div>
-                        <div class="professor-title">Business Administration Department</div>
+                    <div class="book-info">
+                        <div class="book-title">Advanced JavaScript</div>
+                        <div class="book-author">Jane Smith</div>
                     </div>
                     <div class="action-buttons">
                         <button class="action-btn edit-btn">
@@ -266,31 +243,26 @@
                 </div>
                 <div class="card-details">
                     <div class="detail-row">
-                        <span class="detail-label">Research Interests:</span> Marketing, Consumer Behavior, Brand Management
+                        <span class="detail-label">Category:</span> Web Development
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Email:</span> emily.davis@university.edu
+                        <span class="detail-label">Price:</span> $39.99
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Phone:</span> (555) 987-6543
+                        <span class="detail-label">Description:</span> Deep dive into advanced JavaScript concepts and modern development techniques.
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Availability:</span>
-                        <span class="availability-badge not-available">Not Available</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Profile:</span>
-                        <a href="#" style="color: #4285f4;">View Profile</a>
+                        <span class="detail-label">Suggested For:</span> Web Developers, Programmers
                     </div>
                 </div>
             </div>
-            <!-- Sample Professor Card 3 -->
-            <div class="professor-card">
+            <!-- Sample Book Card 3 -->
+            <div class="book-card">
                 <div class="card-header">
-                    <img src="https://via.placeholder.com/60" alt="Professor" class="professor-image">
-                    <div class="professor-info">
-                        <div class="professor-name">Dr. Michael Wilson</div>
-                        <div class="professor-title">Engineering Department</div>
+                    <img src="https://via.placeholder.com/60" alt="Book Cover" class="book-image">
+                    <div class="book-info">
+                        <div class="book-title">Data Science Fundamentals</div>
+                        <div class="book-author">Robert Johnson</div>
                     </div>
                     <div class="action-buttons">
                         <button class="action-btn edit-btn">
@@ -303,33 +275,26 @@
                 </div>
                 <div class="card-details">
                     <div class="detail-row">
-                        <span class="detail-label">Research Interests:</span> Renewable Energy, Sustainable Design, Environmental Engineering
+                        <span class="detail-label">Category:</span> Data Science
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Email:</span> michael.wilson@university.edu
+                        <span class="detail-label">Price:</span> $49.99
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Phone:</span> (555) 456-7890
+                        <span class="detail-label">Description:</span> Essential concepts and techniques in data science with practical examples.
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Availability:</span>
-                        <span class="availability-badge available">Available</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Profile:</span>
-                        <a href="#" style="color: #4285f4;">View Profile</a>
+                        <span class="detail-label">Suggested For:</span> Data Analysts, Scientists, Researchers
                     </div>
                 </div>
             </div>
-            <!-- Sample Professor Card 4 -->
-            <div class="professor-card">
+            <!-- Sample Book Card 4 -->
+            <div class="book-card">
                 <div class="card-header">
-                    <div class="image-placeholder">
-                        <i class="fas fa-user-tie"></i>
-                    </div>
-                    <div class="professor-info">
-                        <div class="professor-name">Dr. Sarah Thompson</div>
-                        <div class="professor-title">Psychology Department</div>
+                    <img src="https://via.placeholder.com/60" alt="Book Cover" class="book-image">
+                    <div class="book-info">
+                        <div class="book-title">UI/UX Design Principles</div>
+                        <div class="book-author">Emily Davis</div>
                     </div>
                     <div class="action-buttons">
                         <button class="action-btn edit-btn">
@@ -342,70 +307,28 @@
                 </div>
                 <div class="card-details">
                     <div class="detail-row">
-                        <span class="detail-label">Research Interests:</span> Cognitive Psychology, Behavioral Neuroscience, Mental Health
+                        <span class="detail-label">Category:</span> Design
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Email:</span> sarah.thompson@university.edu
+                        <span class="detail-label">Price:</span> $34.99
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Phone:</span> (555) 234-5678
+                        <span class="detail-label">Description:</span> Fundamental principles of user interface and user experience design.
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Availability:</span>
-                        <span class="availability-badge available">Available</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Profile:</span>
-                        <a href="#" style="color: #4285f4;">View Profile</a>
+                        <span class="detail-label">Suggested For:</span> Designers, Product Managers
                     </div>
                 </div>
             </div>
-            <!-- Sample Professor Card 5 -->
-            <div class="professor-card">
-                <div class="card-header">
-                    <img src="https://via.placeholder.com/60" alt="Professor" class="professor-image">
-                    <div class="professor-info">
-                        <div class="professor-name">Dr. James Anderson</div>
-                        <div class="professor-title">History Department</div>
-                    </div>
-                    <div class="action-buttons">
-                        <button class="action-btn edit-btn">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="action-btn delete-btn">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-details">
-                    <div class="detail-row">
-                        <span class="detail-label">Research Interests:</span> Ancient Civilizations, Medieval History, Cultural Anthropology
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Email:</span> james.anderson@university.edu
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Phone:</span> (555) 345-6789
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Availability:</span>
-                        <span class="availability-badge not-available">Not Available</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Profile:</span>
-                        <a href="#" style="color: #4285f4;">View Profile</a>
-                    </div>
-                </div>
-            </div>
-            <!-- Sample Professor Card 6 -->
-            <div class="professor-card">
+            <!-- Sample Book Card 5 -->
+            <div class="book-card">
                 <div class="card-header">
                     <div class="image-placeholder">
-                        <i class="fas fa-user-tie"></i>
+                        <i class="fas fa-book"></i>
                     </div>
-                    <div class="professor-info">
-                        <div class="professor-name">Dr. Lisa Chen</div>
-                        <div class="professor-title">Mathematics Department</div>
+                    <div class="book-info">
+                        <div class="book-title">Cloud Computing Basics</div>
+                        <div class="book-author">Michael Wilson</div>
                     </div>
                     <div class="action-buttons">
                         <button class="action-btn edit-btn">
@@ -418,21 +341,48 @@
                 </div>
                 <div class="card-details">
                     <div class="detail-row">
-                        <span class="detail-label">Research Interests:</span> Applied Mathematics, Statistical Analysis, Computational Modeling
+                        <span class="detail-label">Category:</span> Cloud Technology
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Email:</span> lisa.chen@university.edu
+                        <span class="detail-label">Price:</span> $44.99
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Phone:</span> (555) 567-8901
+                        <span class="detail-label">Description:</span> Introduction to cloud computing concepts and major service providers.
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Availability:</span>
-                        <span class="availability-badge available">Available</span>
+                        <span class="detail-label">Suggested For:</span> IT Professionals, System Administrators
+                    </div>
+                </div>
+            </div>
+            <!-- Sample Book Card 6 -->
+            <div class="book-card">
+                <div class="card-header">
+                    <img src="https://via.placeholder.com/60" alt="Book Cover" class="book-image">
+                    <div class="book-info">
+                        <div class="book-title">Mobile App Development</div>
+                        <div class="book-author">Sarah Thompson</div>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="action-btn edit-btn">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn delete-btn">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-details">
+                    <div class="detail-row">
+                        <span class="detail-label">Category:</span> Mobile Development
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Profile:</span>
-                        <a href="#" style="color: #4285f4;">View Profile</a>
+                        <span class="detail-label">Price:</span> $37.99
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Description:</span> Complete guide to building mobile applications for iOS and Android platforms.
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Suggested For:</span> Mobile Developers, App Designers
                     </div>
                 </div>
             </div>
@@ -440,17 +390,17 @@
         <!-- Empty State (hidden by default) -->
         <div class="empty-state" id="emptyState" style="display: none;">
             <div class="empty-icon">
-                <i class="fas fa-user-tie"></i>
+                <i class="fas fa-book"></i>
             </div>
-            <h3>No Professors Found</h3>
-            <p>There are currently no professors in the system.</p>
+            <h3>No Books Found</h3>
+            <p>There are currently no books in the system.</p>
         </div>
     </div>
     <script>
         // Simulate loading data
         setTimeout(() => {
             document.getElementById('loadingIndicator').style.display = 'none';
-            document.getElementById('professorList').style.display = 'block';
+            document.getElementById('bookList').style.display = 'block';
             // To show empty state instead, you would use:
             // document.getElementById('emptyState').style.display = 'block';
         }, 1500);

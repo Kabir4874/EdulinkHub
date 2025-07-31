@@ -1,3 +1,8 @@
+<?php
+require '../config/database.php';
+// Set the active page for the sidebar
+$active_page = 'dashboard';
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -6,6 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./styles/sidebar.css">
     <style>
         :root {
             --primary-color: #ef5350;
@@ -27,60 +33,6 @@
             min-height: 100vh;
         }
 
-        /* Sidebar Styles */
-        .sidebar {
-            width: var(--sidebar-width);
-            background: #2c3e50;
-            color: white;
-            height: 100vh;
-            position: fixed;
-            transition: all var(--transition-speed) ease;
-            z-index: 100;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .sidebar-header {
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .sidebar-header h3 {
-            color: white;
-            font-size: 1.3rem;
-        }
-
-        .sidebar-menu {
-            padding: 20px 0;
-        }
-
-        .sidebar-menu a {
-            display: block;
-            padding: 15px 25px;
-            color: #ecf0f1;
-            text-decoration: none;
-            transition: all 0.3s;
-            border-left: 4px solid transparent;
-        }
-
-        .sidebar-menu a:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-left: 4px solid var(--primary-color);
-            color: white;
-        }
-
-        .sidebar-menu a.active {
-            background: rgba(255, 255, 255, 0.1);
-            border-left: 4px solid var(--primary-color);
-            color: white;
-        }
-
-        .sidebar-menu i {
-            margin-right: 10px;
-            font-size: 1.1rem;
-        }
 
         /* Main Content Styles */
         .main-content {
@@ -225,30 +177,13 @@
 
 <body>
     <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <h3>EduLink Hub</h3>
-        </div>
-        <div class="sidebar-menu">
-            <a href="#" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-            <a href="#"><i class="fas fa-user-graduate"></i> Students</a>
-            <a href="#"><i class="fas fa-chalkboard-teacher"></i> Professors</a>
-            <a href="#"><i class="fas fa-book"></i> Courses</a>
-            <a href="#"><i class="fas fa-book-open"></i> Library</a>
-            <a href="#"><i class="fas fa-money-bill-wave"></i> Scholarships</a>
-            <a href="#"><i class="fas fa-chart-bar"></i> Reports</a>
-            <a href="#"><i class="fas fa-cog"></i> Settings</a>
-        </div>
-    </div>
+    <?= include './common/sidebar.php' ?>
 
     <!-- Main Content -->
     <div class="main-content">
         <!-- Navbar -->
         <nav class="navbar">
             <div class="navbar-left">
-                <button class="toggle-btn" id="toggleBtn">
-                    <i class="fas fa-bars"></i>
-                </button>
                 <h2>Admin Dashboard</h2>
             </div>
             <div class="navbar-right">

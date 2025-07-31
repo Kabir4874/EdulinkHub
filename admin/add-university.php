@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Book - Admin</title>
+    <title>Manage University Admission</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -15,6 +15,7 @@
             --border-color: #ddd;
             --background-color: #f5f5f5;
             --card-bg: #ffffff;
+            --success-color: #4caf50;
         }
 
         * {
@@ -39,7 +40,7 @@
 
         .app-bar h1 {
             font-size: 1.5rem;
-            font-weight: 500;
+            font-weight: bold;
         }
 
         /* Main Content */
@@ -62,7 +63,7 @@
         .form-header {
             text-align: center;
             margin-bottom: 25px;
-            color: var(--primary-color);
+            color: var(--primary-dark);
         }
 
         .form-header h2 {
@@ -108,6 +109,13 @@
             position: relative;
         }
 
+        textarea.text-input {
+            min-height: 100px;
+            resize: vertical;
+            padding-top: 12px;
+            padding-bottom: 12px;
+        }
+
         /* Dropdown */
         .dropdown {
             width: 100%;
@@ -123,87 +131,69 @@
             background-size: 12px auto;
         }
 
-        /* Toggle Switch */
-        .toggle-container {
+        /* Exam Units Section */
+        .section-header {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--primary-dark);
+            margin: 20px 0 10px 0;
+        }
+
+        .exam-unit {
             display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
             align-items: center;
-            margin: 15px 0;
         }
 
-        .toggle-label {
-            margin-right: 10px;
-            font-weight: 500;
+        .exam-unit-input {
+            flex: 1;
         }
 
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 34px;
-        }
-
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
+        .delete-btn {
+            color: #f44336;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
             cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 34px;
+            padding: 5px;
         }
 
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked+.slider {
-            background-color: var(--primary-color);
-        }
-
-        input:checked+.slider:before {
-            transform: translateX(26px);
-        }
-
-        /* Submit Button */
-        .submit-btn {
-            width: 100%;
+        /* Buttons */
+        .btn {
             padding: 14px;
-            background-color: var(--primary-dark);
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 20px;
-            transition: background-color 0.3s;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
+            transition: background-color 0.3s;
         }
 
-        .submit-btn:hover {
+        .btn-primary {
+            background-color: var(--primary-dark);
+            width: 100%;
+        }
+
+        .btn-primary:hover {
             background-color: var(--primary-color);
         }
 
-        .submit-btn i {
+        .btn-success {
+            background-color: var(--success-color);
+            padding: 10px 15px;
+        }
+
+        .btn-success:hover {
+            background-color: #3d8b40;
+        }
+
+        .btn i {
             font-size: 1.2rem;
         }
 
@@ -215,7 +205,7 @@
             border: 3px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
             border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
+            animation: spin 1s linear infinite;
         }
 
         @keyframes spin {
@@ -223,13 +213,18 @@
                 transform: rotate(360deg);
             }
         }
+
+        /* Margin Utilities */
+        .mb-20 {
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 
 <body>
     <!-- App Bar -->
     <div class="app-bar">
-        <h1>Add Book</h1>
+        <h1>Manage University Admission</h1>
     </div>
 
     <!-- Main Content -->
@@ -237,26 +232,85 @@
         <div class="card">
             <!-- Form Header -->
             <div class="form-header">
-                <h2>📚 Enter Book Details</h2>
+                <h2>📌 Enter Admission Details</h2>
             </div>
 
-            <!-- Book Form -->
-            <form id="bookForm">
-                <!-- Book Name -->
+            <!-- Admission Form -->
+            <form id="admissionForm">
+                <!-- University Name -->
                 <div class="form-group">
-                    <label for="bookName">Book Name</label>
+                    <label for="universityName">University Name</label>
                     <div class="input-container">
-                        <i class="fas fa-book input-icon"></i>
-                        <input type="text" id="bookName" class="text-input" required>
+                        <i class="fas fa-school input-icon"></i>
+                        <input type="text" id="universityName" class="text-input" required>
                     </div>
                 </div>
 
-                <!-- Author Name -->
+                <!-- Location -->
                 <div class="form-group">
-                    <label for="authorName">Author Name</label>
+                    <label for="location">Location</label>
                     <div class="input-container">
-                        <i class="fas fa-user input-icon"></i>
-                        <input type="text" id="authorName" class="text-input" required>
+                        <i class="fas fa-map-marker-alt input-icon"></i>
+                        <input type="text" id="location" class="text-input" required>
+                    </div>
+                </div>
+
+                <!-- Program Type -->
+                <div class="form-group">
+                    <label for="programType">Program Type</label>
+                    <div class="input-container">
+                        <i class="fas fa-graduation-cap input-icon"></i>
+                        <select id="programType" class="dropdown" required>
+                            <option value="" disabled selected>Select Program Type</option>
+                            <option value="undergraduate">Undergraduate</option>
+                            <option value="postgraduate">Postgraduate</option>
+                            <option value="Ph.D.">Ph.D.</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Discipline -->
+                <div class="form-group">
+                    <label for="discipline">Discipline</label>
+                    <div class="input-container">
+                        <i class="fas fa-book-open input-icon"></i>
+                        <textarea id="discipline" class="text-input" required></textarea>
+                    </div>
+                </div>
+
+                <!-- Application Date -->
+                <div class="form-group">
+                    <label for="applyDate">Application Date</label>
+                    <div class="input-container">
+                        <i class="fas fa-calendar-day input-icon"></i>
+                        <input type="text" id="applyDate" class="text-input" required readonly>
+                    </div>
+                </div>
+
+                <!-- Application Deadline -->
+                <div class="form-group">
+                    <label for="deadline">Application Deadline</label>
+                    <div class="input-container">
+                        <i class="fas fa-calendar-times input-icon"></i>
+                        <input type="text" id="deadline" class="text-input" required readonly>
+                    </div>
+                </div>
+
+                <!-- Application Link -->
+                <div class="form-group">
+                    <label for="applyLink">Application Link</label>
+                    <div class="input-container">
+                        <i class="fas fa-link input-icon"></i>
+                        <input type="url" id="applyLink" class="text-input" required>
+                    </div>
+                </div>
+
+                <!-- Admit Card Download Date -->
+                <div class="form-group">
+                    <label for="admitCardDate">Admit Card Download Date</label>
+                    <div class="input-container">
+                        <i class="fas fa-download input-icon"></i>
+                        <input type="text" id="admitCardDate" class="text-input" required readonly>
                     </div>
                 </div>
 
@@ -269,68 +323,23 @@
                     </div>
                 </div>
 
-                <!-- Category Dropdown -->
-                <div class="form-group">
-                    <label for="category">Category</label>
-                    <div class="input-container">
-                        <i class="fas fa-tag input-icon"></i>
-                        <select id="category" class="dropdown" required>
-                            <option value="Admission">Admission</option>
-                            <option value="Job Exam">Job Exam</option>
-                            <option value="Skill-Based">Skill-Based</option>
-                        </select>
-                    </div>
+                <!-- Exam Units Section -->
+                <div class="section-header">Exam Units</div>
+                <div id="examUnitsContainer">
+                    <!-- Exam units will be added here dynamically -->
                 </div>
 
-                <!-- Description -->
-                <div class="form-group">
-                    <label for="description">Description</label>
-                    <div class="input-container">
-                        <i class="fas fa-align-left input-icon"></i>
-                        <input type="text" id="description" class="text-input" required>
-                    </div>
-                </div>
-
-                <!-- PDF Link -->
-                <div class="form-group">
-                    <label for="pdfLink">PDF Link</label>
-                    <div class="input-container">
-                        <i class="fas fa-link input-icon"></i>
-                        <input type="url" id="pdfLink" class="text-input" required>
-                    </div>
-                </div>
-
-                <!-- Suggested For -->
-                <div class="form-group">
-                    <label for="suggestedFor">Suggested For (comma-separated)</label>
-                    <div class="input-container">
-                        <i class="fas fa-graduation-cap input-icon"></i>
-                        <input type="text" id="suggestedFor" class="text-input" required>
-                    </div>
-                </div>
-
-                <!-- Is Paid Toggle -->
-                <div class="toggle-container">
-                    <span class="toggle-label">Is Paid?</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="isPaid">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-
-                <!-- Price Field (hidden by default) -->
-                <div class="form-group" id="priceField" style="display: none;">
-                    <label for="price">Price</label>
-                    <div class="input-container">
-                        <i class="fas fa-dollar-sign input-icon"></i>
-                        <input type="number" id="price" class="text-input" step="0.01">
-                    </div>
-                </div>
+                <!-- Add Exam Unit Button -->
+                <button type="button" class="btn btn-success" id="addExamUnitBtn">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Exam Unit</span>
+                </button>
 
                 <!-- Submit Button -->
-                <button type="submit" class="submit-btn" id="submitBtn">
+                <div class="mb-20"></div>
+                <button type="submit" class="btn btn-primary" id="submitBtn">
                     <i class="fas fa-check-circle"></i>
-                    <span>Add Book</span>
+                    <span>Submit</span>
                 </button>
             </form>
         </div>
