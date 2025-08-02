@@ -13,7 +13,7 @@ $active_page = 'index';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="./styles/index.css">
     <link rel="stylesheet" href="../admin/styles/sidebar.css">
-    
+
 </head>
 
 <body>
@@ -23,20 +23,7 @@ $active_page = 'index';
     <!-- Main Content -->
     <div class="main-content">
         <!-- Navbar -->
-        <nav class="navbar">
-            <div class="navbar-left">
-                <h2>Admin Dashboard</h2>
-            </div>
-            <div class="navbar-right">
-                <div class="user-profile">
-                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Admin">
-                    <div class="user-info">
-                        <h4>Admin User</h4>
-                        <p>Super Admin</p>
-                    </div>
-                </div>
-            </div>
-        </nav>
+        <?= include './common/navbar.php' ?>
 
         <!-- Dashboard Content -->
         <div class="content">

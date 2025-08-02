@@ -1,4 +1,3 @@
-
 <?php
 require '../config/database.php';
 // Set the active page for the sidebar
@@ -14,12 +13,13 @@ $active_page = 'add-professor';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../admin/styles/add-professor.css">
     <link rel="stylesheet" href="../admin/styles/sidebar.css">
+    <link rel="stylesheet" href="../admin/styles/navbar.css">
 </head>
 
 <body>
     <?php
-include("../admin/common/sidebar.php");
-?>
+    include("../admin/common/sidebar.php");
+    ?>
     <!-- App Bar -->
     <div class="app-bar">
         <h1>Add Professor</h1>
@@ -27,6 +27,7 @@ include("../admin/common/sidebar.php");
 
     <!-- Main Content -->
     <div class="content">
+        <?= include './common/navbar.php' ?>
         <div class="card">
             <!-- Form Header -->
             <div class="form-header">

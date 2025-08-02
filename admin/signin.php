@@ -1,6 +1,5 @@
 <?php
 require '../config/database.php';
-// Set the active page for the sidebar
 $active_page = 'signin';
 ?>
 <!DOCTYPE html>
@@ -11,12 +10,11 @@ $active_page = 'signin';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Sign In</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="../admin/styles/signin.css">
-    <link rel="stylesheet" href="../admin/styles/sidebar.css">
 </head>
 
 <body>
-   
     <!-- App Bar -->
     <div class="app-bar">
         <h1>Admin Sign In</h1>
@@ -30,10 +28,18 @@ $active_page = 'signin';
         </div>
 
         <!-- Error Message (hidden by default) -->
-        <div class="error-message" id="errorMessage" style="display: none;"></div>
+        <?php if (isset($_SESSION['error'])): ?>
+            <div class="error-message" id="errorMessage">
+                <?php
+                echo $_SESSION['error'];
+                unset($_SESSION['error']);
+                ?>
+            </div>
+        <?php endif; ?>
 
         <!-- Sign In Form -->
-        <form id="signInForm">
+        <form id="signInForm" action="../admin/logic/signin-logic.php" method="POST">
+
             <!-- Email Field -->
             <div class="form-group">
                 <label for="email">Admin Email</label>
@@ -63,6 +69,24 @@ $active_page = 'signin';
             </button>
         </form>
     </div>
+
+    <script>
+        // Password visibility toggle
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const passwordInput = document.getElementById('password');
+            const passwordIcon = this.querySelector('i');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                passwordIcon.classList.remove('fa-eye');
+                passwordIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                passwordIcon.classList.remove('fa-eye-slash');
+                passwordIcon.classList.add('fa-eye');
+            }
+        });
+    </script>
 </body>
 
 </html>

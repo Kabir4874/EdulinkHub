@@ -36,8 +36,8 @@ $active_page = isset($active_page) ? $active_page : 'dashboard';
         <a href="../admin/reports.php" class="<?php echo $active_page === 'reports' ? 'active' : ''; ?>">
             <i class="fas fa-chart-bar"></i> Reports
         </a>
-       
-        <a href="../admin/signin.php" class="<?php echo $active_page === 'signin' ? 'active' : ''; ?>">
+
+        <a href="<?= ROOT_URL ?>admin/logic/logout-logic.php" class="<?php echo $active_page === 'signin' ? 'active' : ''; ?>">
             <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
         </a>
     </div>
