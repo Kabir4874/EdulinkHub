@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jul 31, 2025 at 07:00 PM
+-- Generation Time: Aug 10, 2025 at 05:44 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -30,11 +30,11 @@ SET time_zone = "+00:00";
 CREATE TABLE `books` (
   `id` int(11) NOT NULL,
   `title` varchar(255) NOT NULL,
-  `imageUrl` varchar(255) NOT NULL,
+  `image` varchar(255) NOT NULL,
   `author` varchar(255) NOT NULL,
   `category` enum('Admission','Job Exam','Skill-Based') NOT NULL,
   `description` text DEFAULT NULL,
-  `pdfLink` varchar(255) NOT NULL,
+  `pdf` varchar(255) NOT NULL,
   `uploadDate` date DEFAULT curdate(),
   `suggestedFor` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`suggestedFor`)),
   `isPaid` tinyint(1) DEFAULT 0,
@@ -47,7 +47,7 @@ CREATE TABLE `books` (
 -- Dumping data for table `books`
 --
 
-INSERT INTO `books` (`id`, `title`, `imageUrl`, `author`, `category`, `description`, `pdfLink`, `uploadDate`, `suggestedFor`, `isPaid`, `price`, `createdAt`, `updatedAt`) VALUES
+INSERT INTO `books` (`id`, `title`, `image`, `author`, `category`, `description`, `pdf`, `uploadDate`, `suggestedFor`, `isPaid`, `price`, `createdAt`, `updatedAt`) VALUES
 (1, 'College Admission Guide', 'https://example.com/images/book1.jpg', 'Dr. Robert Brown', 'Admission', 'Comprehensive guide to college admission process', 'https://example.com/books/book1.pdf', '2025-07-31', '[\"High School Students\", \"Parents\"]', 1, 19.99, '2025-07-31 16:57:07', '2025-07-31 16:57:07'),
 (2, 'Job Interview Success', 'https://example.com/images/book2.jpg', 'Prof. Emily Davis', 'Job Exam', 'Master the art of job interviews', 'https://example.com/books/book2.pdf', '2025-07-31', '[\"Job Seekers\", \"Career Changers\"]', 1, 14.99, '2025-07-31 16:57:07', '2025-07-31 16:57:07'),
 (3, 'Advanced Programming Skills', 'https://example.com/images/book3.jpg', 'Tech Expert', 'Skill-Based', 'Learn advanced programming techniques', 'https://example.com/books/book3.pdf', '2025-07-31', '[\"Developers\", \"Computer Science Students\"]', 0, NULL, '2025-07-31 16:57:07', '2025-07-31 16:57:07'),
@@ -153,7 +153,7 @@ INSERT INTO `fundings` (`id`, `type`, `title`, `description`, `link`, `eligibili
 CREATE TABLE `professors` (
   `id` int(11) NOT NULL,
   `name` varchar(255) NOT NULL,
-  `imageUrl` varchar(255) DEFAULT NULL,
+  `image` varchar(255) DEFAULT NULL,
   `researchInterests` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`researchInterests`)),
   `contact_email` varchar(255) NOT NULL,
   `contact_phone` varchar(20) DEFAULT NULL,
@@ -167,7 +167,7 @@ CREATE TABLE `professors` (
 -- Dumping data for table `professors`
 --
 
-INSERT INTO `professors` (`id`, `name`, `imageUrl`, `researchInterests`, `contact_email`, `contact_phone`, `availability`, `profileLink`, `createdAt`, `updatedAt`) VALUES
+INSERT INTO `professors` (`id`, `name`, `image`, `researchInterests`, `contact_email`, `contact_phone`, `availability`, `profileLink`, `createdAt`, `updatedAt`) VALUES
 (1, 'Dr. Sarah Johnson', 'https://example.com/images/sarah_johnson.jpg', '[\"Artificial Intelligence\", \"Machine Learning\", \"Natural Language Processing\"]', 'sarah.johnson@university.edu', '+1 (555) 123-4567', 'available', 'https://university.edu/faculty/sarah-johnson', '2025-07-31 16:47:42', '2025-07-31 16:47:42'),
 (2, 'Dr. Michael Chen', 'https://example.com/images/michael_chen.jpg', '[\"Quantum Computing\", \"Cryptography\", \"Algorithm Design\"]', 'michael.chen@university.edu', '+1 (555) 987-6543', 'available', 'https://university.edu/faculty/michael-chen', '2025-07-31 16:47:42', '2025-07-31 16:47:42'),
 (3, 'Dr. Emily Rodriguez', 'https://example.com/images/emily_rodriguez.jpg', '[\"Bioinformatics\", \"Genomics\", \"Computational Biology\"]', 'emily.rodriguez@university.edu', '+1 (555) 456-7890', 'not available', 'https://university.edu/faculty/emily-rodriguez', '2025-07-31 16:47:42', '2025-07-31 16:47:42'),
@@ -241,7 +241,7 @@ CREATE TABLE `universities` (
   `applicationDate` date DEFAULT NULL,
   `applicationDeadline` date DEFAULT NULL,
   `admitCardDownloadDate` date DEFAULT NULL,
-  `imageUrl` varchar(255) DEFAULT NULL,
+  `image` varchar(255) DEFAULT NULL,
   `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
   `updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -250,7 +250,7 @@ CREATE TABLE `universities` (
 -- Dumping data for table `universities`
 --
 
-INSERT INTO `universities` (`id`, `name`, `location`, `programType`, `discipline`, `admissionLink`, `applicationDate`, `applicationDeadline`, `admitCardDownloadDate`, `imageUrl`, `createdAt`, `updatedAt`) VALUES
+INSERT INTO `universities` (`id`, `name`, `location`, `programType`, `discipline`, `admissionLink`, `applicationDate`, `applicationDeadline`, `admitCardDownloadDate`, `image`, `createdAt`, `updatedAt`) VALUES
 (1, 'Harvard University', 'Cambridge, MA', 'undergraduate', 'Computer Science', 'https://harvard.edu/apply', '2023-09-01', '2023-12-15', '2024-01-15', 'https://example.com/images/harvard.jpg', '2025-07-31 16:49:06', '2025-07-31 16:49:06'),
 (2, 'Stanford University', 'Stanford, CA', 'postgraduate', 'Artificial Intelligence', 'https://stanford.edu/admissions', '2023-10-01', '2024-01-20', '2024-02-10', 'https://example.com/images/stanford.jpg', '2025-07-31 16:49:06', '2025-07-31 16:49:06'),
 (3, 'MIT', 'Cambridge, MA', 'Ph.D.', 'Robotics', 'https://mit.edu/admissions', '2023-11-01', '2024-02-15', '2024-03-01', 'https://example.com/images/mit.jpg', '2025-07-31 16:49:06', '2025-07-31 16:49:06'),
@@ -289,7 +289,8 @@ INSERT INTO `users` (`id`, `name`, `email`, `password`, `profilePicture`, `addre
 (2, 'Jane Smith', 'jane@example.com', 'hashed_password_2', 'https://example.com/images/jane.jpg', '456 Oak Ave, Town', '555-5678', 1, NULL, 0, NULL, 'user', '2025-07-31 16:57:07', '2025-07-31 16:57:07'),
 (3, 'Admin User', 'admin@example.com', 'hashed_password_admin', 'https://example.com/images/admin.jpg', '789 Admin Rd, Capital', '555-9999', 1, NULL, 1, '2025-12-31', 'admin', '2025-07-31 16:57:07', '2025-07-31 16:57:07'),
 (4, 'Mike Johnson', 'mike@example.com', 'hashed_password_3', NULL, '321 Pine St, Village', '555-4321', 0, NULL, 0, NULL, 'user', '2025-07-31 16:57:07', '2025-07-31 16:57:07'),
-(5, 'Sarah Williams', 'sarah@example.com', 'hashed_password_4', 'https://example.com/images/sarah.jpg', '654 Elm Blvd, County', '555-8765', 1, NULL, 1, '2024-06-30', 'user', '2025-07-31 16:57:07', '2025-07-31 16:57:07');
+(5, 'Sarah Williams', 'sarah@example.com', 'hashed_password_4', 'https://example.com/images/sarah.jpg', '654 Elm Blvd, County', '555-8765', 1, NULL, 1, '2024-06-30', 'user', '2025-07-31 16:57:07', '2025-07-31 16:57:07'),
+(6, 'Admin', 'admin@gmail.com', 'asdfasdf', 'admin_profile.jpg', '123 Admin Street, Admin City', '+10000000000', 1, 0, 1, '2030-12-31', 'admin', '2025-08-02 14:32:14', '2025-08-02 14:34:40');
 
 --
 -- Indexes for dumped tables
@@ -426,7 +427,7 @@ ALTER TABLE `universities`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- Constraints for dumped tables
