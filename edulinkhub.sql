@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 10, 2025 at 05:44 PM
+-- Generation Time: Aug 12, 2025 at 07:01 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -34,7 +34,7 @@ CREATE TABLE `books` (
   `author` varchar(255) NOT NULL,
   `category` enum('Admission','Job Exam','Skill-Based') NOT NULL,
   `description` text DEFAULT NULL,
-  `pdf` varchar(255) NOT NULL,
+  `pdfLink` varchar(255) NOT NULL,
   `uploadDate` date DEFAULT curdate(),
   `suggestedFor` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`suggestedFor`)),
   `isPaid` tinyint(1) DEFAULT 0,
@@ -47,12 +47,12 @@ CREATE TABLE `books` (
 -- Dumping data for table `books`
 --
 
-INSERT INTO `books` (`id`, `title`, `image`, `author`, `category`, `description`, `pdf`, `uploadDate`, `suggestedFor`, `isPaid`, `price`, `createdAt`, `updatedAt`) VALUES
-(1, 'College Admission Guide', 'https://example.com/images/book1.jpg', 'Dr. Robert Brown', 'Admission', 'Comprehensive guide to college admission process', 'https://example.com/books/book1.pdf', '2025-07-31', '[\"High School Students\", \"Parents\"]', 1, 19.99, '2025-07-31 16:57:07', '2025-07-31 16:57:07'),
+INSERT INTO `books` (`id`, `title`, `image`, `author`, `category`, `description`, `pdfLink`, `uploadDate`, `suggestedFor`, `isPaid`, `price`, `createdAt`, `updatedAt`) VALUES
 (2, 'Job Interview Success', 'https://example.com/images/book2.jpg', 'Prof. Emily Davis', 'Job Exam', 'Master the art of job interviews', 'https://example.com/books/book2.pdf', '2025-07-31', '[\"Job Seekers\", \"Career Changers\"]', 1, 14.99, '2025-07-31 16:57:07', '2025-07-31 16:57:07'),
 (3, 'Advanced Programming Skills', 'https://example.com/images/book3.jpg', 'Tech Expert', 'Skill-Based', 'Learn advanced programming techniques', 'https://example.com/books/book3.pdf', '2025-07-31', '[\"Developers\", \"Computer Science Students\"]', 0, NULL, '2025-07-31 16:57:07', '2025-07-31 16:57:07'),
 (4, 'MBA Entrance Preparation', 'https://example.com/images/book4.jpg', 'Business Guru', 'Admission', 'Complete preparation for MBA entrance exams', 'https://example.com/books/book4.pdf', '2025-07-31', '[\"MBA Aspirants\", \"Working Professionals\"]', 1, 24.99, '2025-07-31 16:57:07', '2025-07-31 16:57:07'),
-(5, 'Data Science Fundamentals', 'https://example.com/images/book5.jpg', 'Data Scientist', 'Skill-Based', 'Introduction to data science concepts', 'https://example.com/books/book5.pdf', '2025-07-31', '[\"Students\", \"Professionals\"]', 1, 12.99, '2025-07-31 16:57:07', '2025-07-31 16:57:07');
+(5, 'Data Science Fundamentals', 'https://example.com/images/book5.jpg', 'Data Scientist', 'Skill-Based', 'Introduction to data science concepts', 'https://example.com/books/book5.pdf', '2025-07-31', '[\"Students\", \"Professionals\"]', 1, 12.99, '2025-07-31 16:57:07', '2025-07-31 16:57:07'),
+(6, 'Quia tenetur consequ', '1755016760_ABOUT-DMALL-BANNER.webp', 'Ducimus fugiat aut', 'Admission', 'Facilis est nemo ut', 'https://www.hyxiv.me', '2025-08-12', '[\"Mollit expedita sit\"]', 1, 56.00, '2025-08-12 16:25:49', '2025-08-12 16:59:43');
 
 -- --------------------------------------------------------
 
@@ -71,7 +71,6 @@ CREATE TABLE `book_reviews` (
 --
 
 INSERT INTO `book_reviews` (`id`, `bookId`, `reviewId`) VALUES
-(1, 1, 1),
 (2, 2, 2),
 (3, 3, 3),
 (4, 4, 4),
@@ -140,7 +139,7 @@ CREATE TABLE `fundings` (
 INSERT INTO `fundings` (`id`, `type`, `title`, `description`, `link`, `eligibilityCriteria`, `applyDate`, `applicationDeadline`, `university`, `department`, `professor_id`, `createdAt`, `updatedAt`) VALUES
 (1, 'scholarship', 'Excellence in Computer Science', 'This scholarship supports outstanding students pursuing undergraduate degrees in Computer Science. Provides full tuition and a living stipend.', 'https://university.edu/scholarships/excellence-cs', 'Minimum GPA of 3.8, demonstrated financial need, and strong letters of recommendation.', '2023-09-01', '2024-03-15', 'Harvard University', 'Computer Science', NULL, '2025-07-31 16:51:12', '2025-07-31 16:51:12'),
 (2, 'scholarship', 'Global Leaders Program', 'Merit-based scholarship for international students showing exceptional leadership potential. Covers tuition and accommodation.', 'https://university.edu/scholarships/global-leaders', 'International student status, leadership experience, and community involvement.', '2023-10-01', '2024-02-28', 'Stanford University', 'International Programs', NULL, '2025-07-31 16:51:12', '2025-07-31 16:51:12'),
-(3, 'professor', 'AI Research Grant', 'Funding for professors conducting cutting-edge research in artificial intelligence and machine learning. Provides equipment and research assistant support.', 'https://university.edu/grants/ai-research', 'Tenured or tenure-track faculty position in Computer Science or related field.', '2023-11-01', '2024-04-15', 'MIT', 'Computer Science', 1, '2025-07-31 16:51:12', '2025-07-31 16:51:12'),
+(3, 'professor', 'AI Research Grant', 'Funding for professors conducting cutting-edge research in artificial intelligence and machine learning. Provides equipment and research assistant support.', 'https://university.edu/grants/ai-research', 'Tenured or tenure-track faculty position in Computer Science or related field.', '2023-11-01', '2024-04-15', 'MIT', 'Computer Science', NULL, '2025-07-31 16:51:12', '2025-07-31 16:51:12'),
 (4, 'professor', 'Quantum Computing Initiative', 'Grant program supporting research in quantum computing and quantum information science. Includes funding for lab equipment and travel.', 'https://university.edu/grants/quantum-initiative', 'Faculty position in Physics, Computer Science, or Engineering with focus on quantum technologies.', '2023-12-01', '2024-05-30', 'Princeton University', 'Physics', 2, '2025-07-31 16:51:12', '2025-07-31 16:51:12'),
 (5, 'scholarship', 'Women in STEM Scholarship', 'Supports female students pursuing degrees in science, technology, engineering, and mathematics. Provides mentorship in addition to financial support.', 'https://university.edu/scholarships/women-stem', 'Female student enrolled in STEM program, minimum GPA of 3.5, and demonstrated commitment to community service.', '2023-09-15', '2024-04-01', 'UC Berkeley', 'STEM Programs', NULL, '2025-07-31 16:51:12', '2025-07-31 16:51:12');
 
@@ -168,11 +167,11 @@ CREATE TABLE `professors` (
 --
 
 INSERT INTO `professors` (`id`, `name`, `image`, `researchInterests`, `contact_email`, `contact_phone`, `availability`, `profileLink`, `createdAt`, `updatedAt`) VALUES
-(1, 'Dr. Sarah Johnson', 'https://example.com/images/sarah_johnson.jpg', '[\"Artificial Intelligence\", \"Machine Learning\", \"Natural Language Processing\"]', 'sarah.johnson@university.edu', '+1 (555) 123-4567', 'available', 'https://university.edu/faculty/sarah-johnson', '2025-07-31 16:47:42', '2025-07-31 16:47:42'),
 (2, 'Dr. Michael Chen', 'https://example.com/images/michael_chen.jpg', '[\"Quantum Computing\", \"Cryptography\", \"Algorithm Design\"]', 'michael.chen@university.edu', '+1 (555) 987-6543', 'available', 'https://university.edu/faculty/michael-chen', '2025-07-31 16:47:42', '2025-07-31 16:47:42'),
 (3, 'Dr. Emily Rodriguez', 'https://example.com/images/emily_rodriguez.jpg', '[\"Bioinformatics\", \"Genomics\", \"Computational Biology\"]', 'emily.rodriguez@university.edu', '+1 (555) 456-7890', 'not available', 'https://university.edu/faculty/emily-rodriguez', '2025-07-31 16:47:42', '2025-07-31 16:47:42'),
 (4, 'Dr. James Wilson', 'https://example.com/images/james_wilson.jpg', '[\"Renewable Energy\", \"Sustainable Materials\", \"Environmental Engineering\"]', 'james.wilson@university.edu', '+1 (555) 234-5678', 'available', 'https://university.edu/faculty/james-wilson', '2025-07-31 16:47:42', '2025-07-31 16:47:42'),
-(5, 'Dr. Lisa Thompson', 'https://example.com/images/lisa_thompson.jpg', '[\"Cognitive Psychology\", \"Neuroscience\", \"Human-Computer Interaction\"]', 'lisa.thompson@university.edu', '+1 (555) 876-5432', 'available', 'https://university.edu/faculty/lisa-thompson', '2025-07-31 16:47:42', '2025-07-31 16:47:42');
+(5, 'Dr. Lisa Thompson', '1755014411_2945120.webp', '[\"Cognitive Psychology\",\"Neuroscience\",\"Human-Computer Interaction\"]', 'lisa.thompson@university.edu', '+1 (555) 876-5432', 'available', 'https://university.edu/faculty/lisa-thompson', '2025-07-31 16:47:42', '2025-08-12 16:00:34'),
+(6, 'Kabir Ahmed Ridoy', '1755011734_1-intro-photo-final.jpg', '[\"ai\",\"machine learning\"]', 'kabir.cse.bd@gmail.com', '01886807343', 'available', 'https://www.test.com', '2025-08-12 15:15:34', '2025-08-12 15:17:55');
 
 -- --------------------------------------------------------
 
@@ -192,13 +191,11 @@ CREATE TABLE `purchased_books` (
 --
 
 INSERT INTO `purchased_books` (`id`, `userId`, `bookId`, `purchasedAt`) VALUES
-(1, 1, 1, '2025-07-31 16:57:07'),
 (2, 1, 4, '2025-07-31 16:57:07'),
 (3, 2, 2, '2025-07-31 16:57:07'),
 (4, 4, 3, '2025-07-31 16:57:07'),
 (5, 5, 5, '2025-07-31 16:57:07'),
-(6, 1, 5, '2025-07-31 16:57:07'),
-(7, 2, 1, '2025-07-31 16:57:07');
+(6, 1, 5, '2025-07-31 16:57:07');
 
 -- --------------------------------------------------------
 
@@ -379,7 +376,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `books`
 --
 ALTER TABLE `books`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `book_reviews`
@@ -403,7 +400,7 @@ ALTER TABLE `fundings`
 -- AUTO_INCREMENT for table `professors`
 --
 ALTER TABLE `professors`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `purchased_books`
