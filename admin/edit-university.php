@@ -2,11 +2,43 @@
 require '../config/database.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-$active_page = 'add-university';
+$active_page = 'university-list';
 
-// Values to (re)fill the form after an error
-$old = $_SESSION['add-university-data'] ?? [];
-unset($_SESSION['add-university-data']);
+/* -------- Validate & fetch by id -------- */
+$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+if ($id <= 0) {
+    $_SESSION['university-error'] = 'Invalid university id.';
+    header('Location: university-list.php');
+    exit;
+}
+
+$uni = null;
+if ($stmt = mysqli_prepare($conn, "SELECT id, name, location, programType, discipline, admissionLink, applicationDate, applicationDeadline, admitCardDownloadDate, image FROM universities WHERE id = ?")) {
+    mysqli_stmt_bind_param($stmt, 'i', $id);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    $uni = mysqli_fetch_assoc($res);
+    mysqli_stmt_close($stmt);
+}
+if (!$uni) {
+    $_SESSION['university-error'] = 'University not found.';
+    header('Location: university-list.php');
+    exit;
+}
+
+/* Prefill: if previous POST failed, use saved old values */
+$old = $_SESSION['edit-university-data'] ?? [];
+unset($_SESSION['edit-university-data']);
+
+$name        = $old['name']        ?? ($uni['name'] ?? '');
+$location    = $old['location']    ?? ($uni['location'] ?? '');
+$programType = $old['programType'] ?? ($uni['programType'] ?? '');
+$discipline  = $old['discipline']  ?? ($uni['discipline'] ?? '');
+$admissionLink = $old['admissionLink'] ?? ($uni['admissionLink'] ?? '');
+$applicationDate       = $old['applicationDate']       ?? ($uni['applicationDate'] ?? '');
+$applicationDeadline   = $old['applicationDeadline']   ?? ($uni['applicationDeadline'] ?? '');
+$admitCardDownloadDate = $old['admitCardDownloadDate'] ?? ($uni['admitCardDownloadDate'] ?? '');
+$imageName   = $uni['image'] ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -14,7 +46,7 @@ unset($_SESSION['add-university-data']);
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Add University - EduLink Hub</title>
+    <title>Edit University - EduLink Hub</title>
 
     <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -33,26 +65,29 @@ unset($_SESSION['add-university-data']);
         <?php include __DIR__ . '/common/navbar.php'; ?>
 
         <div class="content">
-            <h1 class="page-title"><i class="fa-solid fa-building-columns"></i> Add University</h1>
+            <h1 class="page-title"><i class="fa-solid fa-building-columns"></i> Edit University</h1>
 
             <!-- Flash messages -->
-            <?php if (!empty($_SESSION['add-university-error'])): ?>
+            <?php if (!empty($_SESSION['edit-university-error'])): ?>
                 <div class="alert alert-error">
                     <i class="fa-solid fa-triangle-exclamation"></i>
-                    <span><?= htmlspecialchars($_SESSION['add-university-error']) ?></span>
+                    <span><?= htmlspecialchars($_SESSION['edit-university-error']) ?></span>
                 </div>
-                <?php unset($_SESSION['add-university-error']); ?>
+                <?php unset($_SESSION['edit-university-error']); ?>
             <?php endif; ?>
 
-            <?php if (!empty($_SESSION['add-university-success'])): ?>
+            <?php if (!empty($_SESSION['edit-university-success'])): ?>
                 <div class="alert alert-success">
                     <i class="fa-solid fa-circle-check"></i>
-                    <span><?= htmlspecialchars($_SESSION['add-university-success']) ?></span>
+                    <span><?= htmlspecialchars($_SESSION['edit-university-success']) ?></span>
                 </div>
-                <?php unset($_SESSION['add-university-success']); ?>
+                <?php unset($_SESSION['edit-university-success']); ?>
             <?php endif; ?>
 
-            <form class="uni-form" action="logic/add-university-logic.php" method="post" enctype="multipart/form-data">
+            <form class="uni-form" action="logic/edit-university-logic.php" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="id" value="<?= (int)$uni['id'] ?>">
+                <input type="hidden" name="existing_image" value="<?= htmlspecialchars($imageName) ?>">
+
                 <!-- Row: Name & Location -->
                 <div class="form-row">
                     <div class="form-group">
@@ -61,9 +96,9 @@ unset($_SESSION['add-university-data']);
                             type="text"
                             id="name"
                             name="name"
-                            placeholder="e.g., Oxford University"
                             required
-                            value="<?= isset($old['name']) ? htmlspecialchars($old['name']) : '' ?>">
+                            placeholder="e.g., Oxford University"
+                            value="<?= htmlspecialchars($name) ?>">
                     </div>
 
                     <div class="form-group">
@@ -72,9 +107,9 @@ unset($_SESSION['add-university-data']);
                             type="text"
                             id="location"
                             name="location"
-                            placeholder="City, Country"
                             required
-                            value="<?= isset($old['location']) ? htmlspecialchars($old['location']) : '' ?>">
+                            placeholder="City, Country"
+                            value="<?= htmlspecialchars($location) ?>">
                     </div>
                 </div>
 
@@ -82,7 +117,7 @@ unset($_SESSION['add-university-data']);
                 <div class="form-row">
                     <div class="form-group">
                         <label for="programType">Program Type</label>
-                        <?php $pt = $old['programType'] ?? ''; ?>
+                        <?php $pt = $programType; ?>
                         <select id="programType" name="programType" required>
                             <option value="" <?= $pt === '' ? 'selected' : '' ?>>Select program type</option>
                             <option value="undergraduate" <?= $pt === 'undergraduate' ? 'selected' : '' ?>>Undergraduate</option>
@@ -97,9 +132,9 @@ unset($_SESSION['add-university-data']);
                             type="text"
                             id="discipline"
                             name="discipline"
-                            placeholder="e.g., Computer Science, Economics"
                             required
-                            value="<?= isset($old['discipline']) ? htmlspecialchars($old['discipline']) : '' ?>">
+                            placeholder="e.g., Computer Science, Economics"
+                            value="<?= htmlspecialchars($discipline) ?>">
                     </div>
                 </div>
 
@@ -110,29 +145,21 @@ unset($_SESSION['add-university-data']);
                         type="url"
                         id="admissionLink"
                         name="admissionLink"
-                        placeholder="https://example.edu/admissions"
                         required
-                        value="<?= isset($old['admissionLink']) ? htmlspecialchars($old['admissionLink']) : '' ?>">
+                        placeholder="https://example.edu/admissions"
+                        value="<?= htmlspecialchars($admissionLink) ?>">
                 </div>
 
                 <!-- Row: Application Dates -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="applicationDate">Application Start Date</label>
-                        <input
-                            type="date"
-                            id="applicationDate"
-                            name="applicationDate"
-                            value="<?= isset($old['applicationDate']) ? htmlspecialchars($old['applicationDate']) : '' ?>">
+                        <input type="date" id="applicationDate" name="applicationDate" value="<?= htmlspecialchars($applicationDate) ?>">
                     </div>
 
                     <div class="form-group">
                         <label for="applicationDeadline">Application Deadline</label>
-                        <input
-                            type="date"
-                            id="applicationDeadline"
-                            name="applicationDeadline"
-                            value="<?= isset($old['applicationDeadline']) ? htmlspecialchars($old['applicationDeadline']) : '' ?>">
+                        <input type="date" id="applicationDeadline" name="applicationDeadline" value="<?= htmlspecialchars($applicationDeadline) ?>">
                     </div>
                 </div>
 
@@ -140,22 +167,28 @@ unset($_SESSION['add-university-data']);
                 <div class="form-row">
                     <div class="form-group">
                         <label for="admitCardDownloadDate">Admit Card Download Date</label>
-                        <input
-                            type="date"
-                            id="admitCardDownloadDate"
-                            name="admitCardDownloadDate"
-                            value="<?= isset($old['admitCardDownloadDate']) ? htmlspecialchars($old['admitCardDownloadDate']) : '' ?>">
+                        <input type="date" id="admitCardDownloadDate" name="admitCardDownloadDate" value="<?= htmlspecialchars($admitCardDownloadDate) ?>">
                     </div>
 
                     <div class="form-group">
                         <label for="image">University/Image Banner (optional)</label>
                         <input type="file" id="image" name="image" accept="image/*">
                         <span class="hint">Recommended: JPG/PNG/WEBP, ≤ 2MB.</span>
+                        <?php if (!empty($imageName)): ?>
+                            <div class="hint" style="margin-top:6px;">
+                                Current:<br>
+                                <img
+                                    src="<?= '../uploads/' . htmlspecialchars($imageName) ?>"
+                                    alt="<?= htmlspecialchars($imageName) ?>"
+                                    style="max-width:150px; height:auto; margin-top:4px;">
+                            </div>
+                        <?php endif; ?>
+
                     </div>
                 </div>
 
                 <button type="submit" name="submit" class="submit-btn">
-                    <i class="fa-solid fa-check-circle"></i> Submit
+                    <i class="fa-solid fa-floppy-disk"></i> Save Changes
                 </button>
             </form>
         </div>
