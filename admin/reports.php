@@ -1,6 +1,255 @@
 <?php
-// reports.php
+require '../config/database.php';
+if (session_status() === PHP_SESSION_NONE) session_start();
+
 $active_page = 'reports';
+
+/* ----------------------------- Filters (GET) ----------------------------- */
+$from = isset($_GET['from']) ? trim($_GET['from']) : '';
+$to   = isset($_GET['to'])   ? trim($_GET['to'])   : '';
+$module = isset($_GET['module']) ? trim(strtolower($_GET['module'])) : '';
+
+$validDate = function ($d) {
+    if ($d === '') return true;
+    $dt = DateTime::createFromFormat('Y-m-d', $d);
+    return $dt && $dt->format('Y-m-d') === $d;
+};
+if (!$validDate($from)) $from = '';
+if (!$validDate($to))   $to   = '';
+
+$modulesAllowed = ['', 'books', 'professors', 'scholarships', 'universities'];
+if (!in_array($module, $modulesAllowed, true)) $module = '';
+
+/* ----------------------------- Helpers ----------------------------- */
+function fetch_one($conn, $sql, $types = '', $params = [])
+{
+    $val = 0;
+    if ($stmt = mysqli_prepare($conn, $sql)) {
+        if ($types !== '') mysqli_stmt_bind_param($stmt, $types, ...$params);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_bind_result($stmt, $val);
+        mysqli_stmt_fetch($stmt);
+        mysqli_stmt_close($stmt);
+    }
+    return (int)$val;
+}
+function fetch_rows($conn, $sql, $types = '', $params = [])
+{
+    $rows = [];
+    if ($stmt = mysqli_prepare($conn, $sql)) {
+        if ($types !== '') mysqli_stmt_bind_param($stmt, $types, ...$params);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        if ($res) while ($r = mysqli_fetch_assoc($res)) $rows[] = $r;
+        mysqli_stmt_close($stmt);
+    }
+    return $rows;
+}
+
+/* ----------------------------- KPIs ----------------------------- */
+// Books
+$totalBooks = fetch_one($conn, "SELECT COUNT(*) FROM books");
+$paidBooks  = fetch_one($conn, "SELECT COUNT(*) FROM books WHERE isPaid=1");
+
+// Professors
+$totalProfessors = fetch_one($conn, "SELECT COUNT(*) FROM professors");
+
+// Scholarships (fundings)
+$totalScholarships = fetch_one($conn, "SELECT COUNT(*) FROM fundings");
+
+// Universities
+$totalUniversities = fetch_one($conn, "SELECT COUNT(*) FROM universities");
+
+// Upcoming deadlines in next 30 days (fundings.applicationDeadline + universities.applicationDeadline)
+$deadlinesNext30 = 0;
+$sqlDeadCount  = "SELECT COUNT(*) FROM fundings WHERE applicationDeadline IS NOT NULL AND applicationDeadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)";
+$sqlDeadCount2 = "SELECT COUNT(*) FROM universities WHERE applicationDeadline IS NOT NULL AND applicationDeadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)";
+$deadlinesNext30 = fetch_one($conn, $sqlDeadCount) + fetch_one($conn, $sqlDeadCount2);
+
+/* ----------------------------- Charts Data ----------------------------- */
+// Books by category
+$bookCats = ['Admission' => 0, 'Job Exam' => 0, 'Skill-Based' => 0];
+$rows = fetch_rows($conn, "SELECT category, COUNT(*) AS c FROM books GROUP BY category");
+foreach ($rows as $r) {
+    $k = $r['category'] ?? '';
+    if (isset($bookCats[$k])) $bookCats[$k] = (int)$r['c'];
+}
+
+// Scholarships by type
+$schTypes = ['university' => 0, 'professor' => 0];
+$rows = fetch_rows($conn, "SELECT LOWER(type) AS t, COUNT(*) AS c FROM fundings GROUP BY t");
+foreach ($rows as $r) {
+    $t = $r['t'] ?? '';
+    if (isset($schTypes[$t])) $schTypes[$t] = (int)$r['c'];
+}
+
+/* ----------------------------- Upcoming Deadlines Table ----------------------------- */
+/* Build date filter for deadlines (apply to both tables) */
+$deadlineWhere = [];
+$types = '';
+$params = [];
+
+if ($from !== '') {
+    $deadlineWhere[] = 'd >= ?';
+    $types .= 's';
+    $params[] = $from;
+}
+if ($to   !== '') {
+    $deadlineWhere[] = 'd <= ?';
+    $types .= 's';
+    $params[] = $to;
+}
+
+$whereSql = $deadlineWhere ? ('WHERE ' . implode(' AND ', $deadlineWhere)) : '';
+
+/*
+ * Unify deadlines:
+ *  - Scholarships: label 'Scholarship', organization = university (or empty if professor), department = department, link = fundings.link
+ *  - Universities: label 'Admission', organization = universities.name, department = universities.discipline, link = admissionLink
+ */
+$sqlUnifiedDeadlines = "
+    SELECT * FROM (
+        SELECT
+            'Scholarship' AS kind,
+            f.title        AS title,
+            COALESCE(NULLIF(f.university,''),'—') AS organization,
+            COALESCE(NULLIF(f.department,''),'—') AS department,
+            f.applicationDeadline AS d,
+            f.link         AS link
+        FROM fundings f
+        WHERE f.applicationDeadline IS NOT NULL
+        UNION ALL
+        SELECT
+            'Admission' AS kind,
+            u.name      AS title,
+            u.name      AS organization,
+            COALESCE(NULLIF(u.discipline,''),'—') AS department,
+            u.applicationDeadline AS d,
+            u.admissionLink AS link
+        FROM universities u
+        WHERE u.applicationDeadline IS NOT NULL
+    ) unified
+    $whereSql
+    ORDER BY d ASC
+    LIMIT 100
+";
+$deadlines = fetch_rows($conn, $sqlUnifiedDeadlines, $types, $params);
+
+/* Compute status for each deadline */
+function deadline_status($dateStr)
+{
+    if (!$dateStr) return ['label' => '—', 'cls' => ''];
+    $today = new DateTime('today');
+    $d = DateTime::createFromFormat('Y-m-d', $dateStr);
+    if (!$d) return ['label' => '—', 'cls' => ''];
+    $diff = (int)$today->diff($d)->format('%r%a'); // negative if past
+    if ($diff < 0)  return ['label' => 'Past',     'cls' => 'past'];
+    if ($diff <= 7) return ['label' => 'Due soon', 'cls' => 'warn'];
+    return ['label' => 'Upcoming', 'cls' => 'ok'];
+}
+
+/* ----------------------------- Recent Activity ----------------------------- */
+/*
+ * We'll UNION the latest entries from each table, using
+ * last_ts = GREATEST(createdAt, updatedAt) when both exist.
+ * Filter by module + date range.
+ */
+$activity = [];
+
+// Build module filter & date filters per table
+$actFilters = [];
+$actTypes = '';
+$actParams = [];
+
+if ($from !== '') {
+    $actFilters[] = "last_ts >= ?";
+    $actTypes .= 's';
+    $actParams[] = $from . ' 00:00:00';
+}
+if ($to   !== '') {
+    $actFilters[] = "last_ts <= ?";
+    $actTypes .= 's';
+    $actParams[] = $to   . ' 23:59:59';
+}
+$actWhere = $actFilters ? ('WHERE ' . implode(' AND ', $actFilters)) : '';
+
+$unionParts = [];
+
+// Books
+if ($module === '' || $module === 'books') {
+    $unionParts[] = "
+        SELECT last_ts, 'Book' AS module, action, title_or_name AS title, actor
+        FROM (
+            SELECT
+                GREATEST(IFNULL(createdAt,'0000-00-00 00:00:00'), IFNULL(updatedAt,'0000-00-00 00:00:00')) AS last_ts,
+                IF(IFNULL(updatedAt,'0000-00-00 00:00:00') > IFNULL(createdAt,'0000-00-00 00:00:00'), 'Updated','Created') AS action,
+                b.title AS title_or_name,
+                '—' AS actor
+            FROM books b
+        ) x
+        $actWhere
+    ";
+}
+// Professors
+if ($module === '' || $module === 'professors') {
+    $unionParts[] = "
+        SELECT last_ts, 'Professor' AS module, action, title_or_name AS title, actor
+        FROM (
+            SELECT
+                GREATEST(IFNULL(createdAt,'0000-00-00 00:00:00'), IFNULL(updatedAt,'0000-00-00 00:00:00')) AS last_ts,
+                IF(IFNULL(updatedAt,'0000-00-00 00:00:00') > IFNULL(createdAt,'0000-00-00 00:00:00'), 'Updated','Created') AS action,
+                p.name AS title_or_name,
+                '—' AS actor
+            FROM professors p
+        ) x
+        $actWhere
+    ";
+}
+// Scholarships (fundings)
+if ($module === '' || $module === 'scholarships') {
+    $unionParts[] = "
+        SELECT last_ts, 'Scholarship' AS module, action, title_or_name AS title, actor
+        FROM (
+            SELECT
+                GREATEST(IFNULL(createdAt,'0000-00-00 00:00:00'), IFNULL(updatedAt,'0000-00-00 00:00:00')) AS last_ts,
+                IF(IFNULL(updatedAt,'0000-00-00 00:00:00') > IFNULL(createdAt,'0000-00-00 00:00:00'), 'Updated','Created') AS action,
+                f.title AS title_or_name,
+                '—' AS actor
+            FROM fundings f
+        ) x
+        $actWhere
+    ";
+}
+// Universities
+if ($module === '' || $module === 'universities') {
+    $unionParts[] = "
+        SELECT last_ts, 'University' AS module, action, title_or_name AS title, actor
+        FROM (
+            SELECT
+                GREATEST(IFNULL(createdAt,'0000-00-00 00:00:00'), IFNULL(updatedAt,'0000-00-00 00:00:00')) AS last_ts,
+                IF(IFNULL(updatedAt,'0000-00-00 00:00:00') > IFNULL(createdAt,'0000-00-00 00:00:00'), 'Updated','Created') AS action,
+                u.name AS title_or_name,
+                '—' AS actor
+            FROM universities u
+        ) x
+        $actWhere
+    ";
+}
+
+if ($unionParts) {
+    $sqlActivity = implode(" UNION ALL ", $unionParts) . " ORDER BY last_ts DESC LIMIT 50";
+    $activity = fetch_rows($conn, $sqlActivity, $actTypes, $actParams);
+}
+
+/* For charts, serialize data safely */
+$booksByCategory = [
+    'labels' => array_keys($bookCats),
+    'data'   => array_values($bookCats),
+];
+$schByType = [
+    'labels' => ['University', 'Professor'],
+    'data'   => [$schTypes['university'], $schTypes['professor']],
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -17,290 +266,8 @@ $active_page = 'reports';
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <style>
-        :root {
-            --primary-color: #4361ee;
-            --secondary-color: #3f37c9;
-            --accent-color: #4895ef;
-            --light-color: #f8f9fa;
-            --dark-color: #212529;
-            --success-color: #4cc9f0;
-            --warning-color: #f72585;
-            --gray-color: #adb5bd;
-            --border-radius: 8px;
-            --box-shadow: 0 4px 6px rgba(0, 0, 0, .1);
-            --transition: .3s ease;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #f5f7fa;
-            color: var(--dark-color);
-            min-height: 100vh;
-            display: flex;
-        }
-
-        .main-content {
-            flex: 1;
-            margin-left: 250px;
-            /* align with your sidebar width */
-            min-height: 100vh;
-        }
-
-        .content {
-            padding: 24px;
-        }
-
-        .page-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            margin: 8px 0 18px;
-        }
-
-        .page-title {
-            font-size: 24px;
-            color: var(--primary-color);
-            font-weight: 700;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .toolbar {
-            display: grid;
-            grid-template-columns: 220px 220px 1fr auto;
-            gap: 10px;
-            background: #fff;
-            padding: 12px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            margin-bottom: 16px;
-        }
-
-        .input,
-        .select,
-        .btn {
-            border-radius: 10px;
-            border: 1px solid #e5e7eb;
-            outline: none;
-            font-size: 14px;
-        }
-
-        .input,
-        .select {
-            padding: 10px 12px;
-            background: var(--light-color)
-        }
-
-        .input:focus,
-        .select:focus {
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 4px rgba(72, 149, 239, .15);
-            background: #fff
-        }
-
-        .btn {
-            background: var(--primary-color);
-            color: #fff;
-            font-weight: 600;
-            padding: 10px 14px;
-            border: none;
-            cursor: pointer;
-            box-shadow: var(--box-shadow);
-            transition: var(--transition);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn:hover {
-            transform: translateY(-1px);
-            background: var(--secondary-color)
-        }
-
-        .btn.secondary {
-            background: #fff;
-            color: var(--dark-color);
-            border: 1px solid #e5e7eb
-        }
-
-        .btn.secondary:hover {
-            border-color: var(--accent-color);
-            color: var(--secondary-color)
-        }
-
-        /* KPI Cards */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .kpi {
-            background: #fff;
-            border-radius: 14px;
-            box-shadow: var(--box-shadow);
-            padding: 16px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .kpi h3 {
-            font-size: 12px;
-            color: #6b7280;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: .4px;
-            margin-bottom: 8px
-        }
-
-        .kpi .value {
-            font-size: 26px;
-            font-weight: 800;
-            color: #0f172a
-        }
-
-        .kpi .sub {
-            font-size: 12px;
-            color: #64748b;
-            margin-top: 4px
-        }
-
-        .kpi .icon {
-            position: absolute;
-            right: 10px;
-            top: 10px;
-            opacity: .12;
-            font-size: 42px;
-            color: #000
-        }
-
-        .kpi.accent-1 {
-            border-top: 3px solid var(--primary-color)
-        }
-
-        .kpi.accent-2 {
-            border-top: 3px solid var(--success-color)
-        }
-
-        .kpi.accent-3 {
-            border-top: 3px solid var(--warning-color)
-        }
-
-        .kpi.accent-4 {
-            border-top: 3px solid #0ea5e9
-        }
-
-        .kpi.accent-5 {
-            border-top: 3px solid #22c55e
-        }
-
-        .kpi.accent-6 {
-            border-top: 3px solid #f59e0b
-        }
-
-        /* Cards */
-        .card {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: var(--box-shadow);
-            overflow: hidden;
-            margin-bottom: 16px;
-        }
-
-        .card-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 14px;
-            border-bottom: 1px solid #eef2f7;
-        }
-
-        .card-title {
-            font-weight: 700;
-            color: #0f172a
-        }
-
-        .card-body {
-            padding: 14px
-        }
-
-        .chart-wrap {
-            height: 320px
-        }
-
-        /* Tables */
-        .table-wrap {
-            overflow-x: auto
-        }
-
-        table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            min-width: 1000px
-        }
-
-        thead th {
-            background: #f8fafc;
-            position: sticky;
-            top: 0;
-            z-index: 1;
-            text-align: left;
-            font-size: 13px;
-            color: #334155;
-            padding: 10px 12px;
-            border-bottom: 1px solid #eef2f7;
-            white-space: nowrap;
-        }
-
-        tbody td {
-            padding: 10px 12px;
-            border-bottom: 1px solid #f1f5f9;
-            font-size: 14px
-        }
-
-        tbody tr:hover {
-            background: #fafafa
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 700;
-            border: 1px solid transparent
-        }
-
-        .badge.ok {
-            background: rgba(76, 201, 240, .15);
-            color: #0b7285;
-            border-color: rgba(76, 201, 240, .35)
-        }
-
-        .badge.warn {
-            background: rgba(247, 37, 133, .12);
-            color: #7a073d;
-            border-color: rgba(247, 37, 133, .3)
-        }
-
-        /* Simple grid for 2-column section under KPIs */
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px
-        }
-    </style>
+    <link rel="stylesheet" href="styles/reports.css">
+    <link rel="stylesheet" href="styles/style.css">
 </head>
 
 <body>
@@ -314,64 +281,67 @@ $active_page = 'reports';
             <div class="page-header">
                 <h1 class="page-title"><i class="fa-solid fa-chart-line"></i> Reports</h1>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;">
-
-                    <button class="btn" type="button"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+                    <a class="btn" href="reports.php" style="text-decoration:none;">
+                        <i class="fa-solid fa-arrows-rotate"></i> Refresh
+                    </a>
                 </div>
             </div>
 
             <!-- Filters -->
-            <div class="toolbar">
-                <input type="date" class="input" id="fromDate" />
-                <input type="date" class="input" id="toDate" />
-                <select id="moduleFilter" class="select">
-                    <option value="">All Modules</option>
-                    <option value="books">Books</option>
-                    <option value="professors">Professors</option>
-                    <option value="scholarships">Scholarships</option>
-                    <option value="universities">Universities</option>
+            <form class="toolbar" method="get" action="reports.php" style="display:grid; grid-template-columns: 1fr 1fr 240px auto; gap:10px;">
+                <input type="date" class="input" id="fromDate" name="from" value="<?= htmlspecialchars($from) ?>" />
+                <input type="date" class="input" id="toDate" name="to" value="<?= htmlspecialchars($to) ?>" />
+                <select id="moduleFilter" name="module" class="select">
+                    <option value="" <?= $module === '' ? 'selected' : ''; ?>>All Modules</option>
+                    <option value="books" <?= $module === 'books' ? 'selected' : ''; ?>>Books</option>
+                    <option value="professors" <?= $module === 'professors' ? 'selected' : ''; ?>>Professors</option>
+                    <option value="scholarships" <?= $module === 'scholarships' ? 'selected' : ''; ?>>Scholarships</option>
+                    <option value="universities" <?= $module === 'universities' ? 'selected' : ''; ?>>Universities</option>
                 </select>
                 <div style="display:flex;gap:10px;justify-content:flex-end;">
-                    <button class="btn secondary" type="button" id="clearFilters"><i class="fa-regular fa-circle-xmark"></i> Clear</button>
-                    <button class="btn" type="button" id="applyFilters"><i class="fa-solid fa-sliders"></i> Apply</button>
+                    <a class="btn secondary" href="reports.php" style="text-decoration:none;">
+                        <i class="fa-regular fa-circle-xmark"></i> Clear
+                    </a>
+                    <button class="btn" type="submit"><i class="fa-solid fa-sliders"></i> Apply</button>
                 </div>
-            </div>
+            </form>
 
             <!-- KPI Cards -->
             <div class="kpi-grid">
                 <div class="kpi accent-1">
                     <i class="fa-solid fa-book icon"></i>
                     <h3>Total Books</h3>
-                    <div class="value" id="kpiBooks">0</div>
+                    <div class="value" id="kpiBooks"><?= number_format($totalBooks) ?></div>
                     <div class="sub">All categories</div>
                 </div>
                 <div class="kpi accent-2">
                     <i class="fa-solid fa-sack-dollar icon"></i>
                     <h3>Paid Books</h3>
-                    <div class="value" id="kpiPaidBooks">0</div>
+                    <div class="value" id="kpiPaidBooks"><?= number_format($paidBooks) ?></div>
                     <div class="sub">Count of paid titles</div>
                 </div>
                 <div class="kpi accent-3">
                     <i class="fa-solid fa-user-graduate icon"></i>
                     <h3>Professors</h3>
-                    <div class="value" id="kpiProfessors">0</div>
+                    <div class="value" id="kpiProfessors"><?= number_format($totalProfessors) ?></div>
                     <div class="sub">Active profiles</div>
                 </div>
                 <div class="kpi accent-4">
                     <i class="fa-solid fa-graduation-cap icon"></i>
                     <h3>Scholarships</h3>
-                    <div class="value" id="kpiScholarships">0</div>
+                    <div class="value" id="kpiScholarships"><?= number_format($totalScholarships) ?></div>
                     <div class="sub">University + Professor</div>
                 </div>
                 <div class="kpi accent-5">
                     <i class="fa-solid fa-building-columns icon"></i>
                     <h3>Universities</h3>
-                    <div class="value" id="kpiUniversities">0</div>
+                    <div class="value" id="kpiUniversities"><?= number_format($totalUniversities) ?></div>
                     <div class="sub">Tracked entries</div>
                 </div>
                 <div class="kpi accent-6">
                     <i class="fa-solid fa-hourglass-half icon"></i>
                     <h3>Upcoming Deadlines</h3>
-                    <div class="value" id="kpiDeadlines">0</div>
+                    <div class="value" id="kpiDeadlines"><?= number_format($deadlinesNext30) ?></div>
                     <div class="sub">Next 30 days</div>
                 </div>
             </div>
@@ -381,7 +351,6 @@ $active_page = 'reports';
                 <div class="card">
                     <div class="card-head">
                         <div class="card-title">Books by Category</div>
-
                     </div>
                     <div class="card-body">
                         <div class="chart-wrap"><canvas id="booksByCategory"></canvas></div>
@@ -391,7 +360,6 @@ $active_page = 'reports';
                 <div class="card">
                     <div class="card-head">
                         <div class="card-title">Scholarships by Type</div>
-
                     </div>
                     <div class="card-body">
                         <div class="chart-wrap"><canvas id="scholarshipsByType"></canvas></div>
@@ -399,7 +367,7 @@ $active_page = 'reports';
                 </div>
             </div>
 
-            <!-- Tables -->
+            <!-- Upcoming Deadlines -->
             <div class="card">
                 <div class="card-head">
                     <div class="card-title">Upcoming Deadlines (Scholarships & Admissions)</div>
@@ -418,28 +386,36 @@ $active_page = 'reports';
                             </tr>
                         </thead>
                         <tbody id="deadlineTbody">
-                            <!-- Placeholder rows — replace with PHP loop later -->
-                            <tr class="empty-row">
-                                <td colspan="7" style="text-align:center;color:#64748b;padding:18px;">
-                                    No deadlines found for the selected range.
-                                </td>
-                            </tr>
-                            <!--
-              <tr>
-                <td>Scholarship</td>
-                <td>Merit Excellence Scholarship</td>
-                <td>Sample University</td>
-                <td>Computer Science</td>
-                <td>2025-03-15</td>
-                <td><span class="badge warn">Due soon</span></td>
-                <td><a class="btn small secondary" href="#" target="_blank">Open</a></td>
-              </tr>
-              -->
+                            <?php if (count($deadlines) === 0): ?>
+                                <tr class="empty-row">
+                                    <td colspan="7" style="text-align:center;color:#64748b;padding:18px;">
+                                        No deadlines found for the selected range.
+                                    </td>
+                                </tr>
+                            <?php else: ?>
+                                <?php foreach ($deadlines as $d): ?>
+                                    <?php $st = deadline_status($d['d']); ?>
+                                    <tr>
+                                        <td><?= htmlspecialchars($d['kind']) ?></td>
+                                        <td><?= htmlspecialchars($d['title']) ?></td>
+                                        <td><?= htmlspecialchars($d['organization']) ?></td>
+                                        <td><?= htmlspecialchars($d['department']) ?></td>
+                                        <td><?= htmlspecialchars($d['d']) ?></td>
+                                        <td><span class="badge <?= $st['cls'] ?>"><?= htmlspecialchars($st['label']) ?></span></td>
+                                        <td>
+                                            <?php if (!empty($d['link'])): ?>
+                                                <a class="btn small secondary" href="<?= htmlspecialchars($d['link']) ?>" target="_blank" rel="noopener">Open</a>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
             </div>
 
+            <!-- Recent Activity -->
             <div class="card">
                 <div class="card-head">
                     <div class="card-title">Recent Activity</div>
@@ -456,20 +432,23 @@ $active_page = 'reports';
                             </tr>
                         </thead>
                         <tbody id="activityTbody">
-                            <tr class="empty-row">
-                                <td colspan="5" style="text-align:center;color:#64748b;padding:18px;">
-                                    No recent activity to show.
-                                </td>
-                            </tr>
-                            <!-- Example static row (remove when wiring to DB)
-              <tr>
-                <td>2025-08-10 10:10</td>
-                <td>Book</td>
-                <td>Created</td>
-                <td>Intro to Algorithms</td>
-                <td>Admin</td>
-              </tr>
-              -->
+                            <?php if (count($activity) === 0): ?>
+                                <tr class="empty-row">
+                                    <td colspan="5" style="text-align:center;color:#64748b;padding:18px;">
+                                        No recent activity to show.
+                                    </td>
+                                </tr>
+                            <?php else: ?>
+                                <?php foreach ($activity as $a): ?>
+                                    <tr>
+                                        <td><?= htmlspecialchars($a['last_ts']) ?></td>
+                                        <td><?= htmlspecialchars($a['module']) ?></td>
+                                        <td><?= htmlspecialchars($a['action']) ?></td>
+                                        <td><?= htmlspecialchars($a['title']) ?></td>
+                                        <td><?= htmlspecialchars($a['actor']) ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
@@ -479,30 +458,23 @@ $active_page = 'reports';
     </main>
 
     <script>
-        // NOTE: No backend logic yet; this script only seeds placeholders so the UI looks complete.
+        // Chart data from PHP
+        const booksByCategory = <?= json_encode($booksByCategory, JSON_UNESCAPED_UNICODE) ?>;
+        const scholarshipsByType = <?= json_encode($schByType, JSON_UNESCAPED_UNICODE) ?>;
 
-        // ---- KPI PLACEHOLDERS (replace with PHP echoes later) ----
-        document.getElementById('kpiBooks').textContent = '128';
-        document.getElementById('kpiPaidBooks').textContent = '46';
-        document.getElementById('kpiProfessors').textContent = '72';
-        document.getElementById('kpiScholarships').textContent = '34';
-        document.getElementById('kpiUniversities').textContent = '19';
-        document.getElementById('kpiDeadlines').textContent = '7';
-
-        // ---- CHARTS (static demo data) ----
         const brand = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
         const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim();
         const warn = getComputedStyle(document.documentElement).getPropertyValue('--warning-color').trim();
         const ok = getComputedStyle(document.documentElement).getPropertyValue('--success-color').trim();
 
-        const ctxBooks = document.getElementById('booksByCategory').getContext('2d');
-        new Chart(ctxBooks, {
+        // Books by Category (bar)
+        new Chart(document.getElementById('booksByCategory').getContext('2d'), {
             type: 'bar',
             data: {
-                labels: ['Admission', 'Job Exam', 'Skill-Based'],
+                labels: booksByCategory.labels,
                 datasets: [{
                     label: 'Books',
-                    data: [52, 38, 38], // replace with dynamic counts
+                    data: booksByCategory.data,
                     backgroundColor: [brand, ok, warn]
                 }]
             },
@@ -521,13 +493,13 @@ $active_page = 'reports';
             }
         });
 
-        const ctxSch = document.getElementById('scholarshipsByType').getContext('2d');
-        new Chart(ctxSch, {
+        // Scholarships by Type (doughnut)
+        new Chart(document.getElementById('scholarshipsByType').getContext('2d'), {
             type: 'doughnut',
             data: {
-                labels: ['University', 'Professor'],
+                labels: scholarshipsByType.labels,
                 datasets: [{
-                    data: [21, 13], // replace with dynamic counts
+                    data: scholarshipsByType.data,
                     backgroundColor: [accent, brand]
                 }]
             },
@@ -539,17 +511,6 @@ $active_page = 'reports';
                     }
                 }
             }
-        });
-
-        // ---- Filters (no logic yet) ----
-        document.getElementById('clearFilters').addEventListener('click', () => {
-            document.getElementById('fromDate').value = '';
-            document.getElementById('toDate').value = '';
-            document.getElementById('moduleFilter').value = '';
-        });
-        document.getElementById('applyFilters').addEventListener('click', () => {
-            // Hook up to backend later
-            alert('Filters applied (placeholder).');
         });
     </script>
 </body>

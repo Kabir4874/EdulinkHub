@@ -1,6 +1,162 @@
 <?php
-// professor-list.php
+// admin/professor-list.php
+require '../config/database.php';
+
 $active_page = 'professors';
+
+/** ------------------------------------------------------------------
+ * Handle DELETE (POST)
+ * -------------------------------------------------------------------*/
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete'], $_POST['id'])) {
+    $id = (int)$_POST['id'];
+
+    // fetch image path for cleanup
+    $img = '';
+    if ($stmt = mysqli_prepare($conn, "SELECT image FROM professors WHERE id = ?")) {
+        mysqli_stmt_bind_param($stmt, 'i', $id);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_bind_result($stmt, $img);
+        mysqli_stmt_fetch($stmt);
+        mysqli_stmt_close($stmt);
+    }
+
+    // delete row
+    if ($stmt = mysqli_prepare($conn, "DELETE FROM professors WHERE id = ?")) {
+        mysqli_stmt_bind_param($stmt, 'i', $id);
+        if (mysqli_stmt_execute($stmt)) {
+            // try to remove file
+            if ($img) {
+                $abs = dirname(__DIR__) . DIRECTORY_SEPARATOR . ltrim($img, '/\\');
+                if (is_file($abs)) {
+                    @unlink($abs);
+                }
+            }
+            $_SESSION['professor-success'] = 'Professor deleted successfully.';
+        } else {
+            $_SESSION['professor-error'] = 'Failed to delete professor. (' . mysqli_error($conn) . ')';
+        }
+        mysqli_stmt_close($stmt);
+    } else {
+        $_SESSION['professor-error'] = 'Delete failed (prepare error).';
+    }
+
+    // redirect back (preserve filters)
+    $qs = $_SERVER['QUERY_STRING'] ?? '';
+    header('Location: professor-list.php' . ($qs ? ('?' . $qs) : ''));
+    exit;
+}
+
+/** ------------------------------------------------------------------
+ * Read filters (GET) + pagination
+ * -------------------------------------------------------------------*/
+$q            = isset($_GET['q']) ? trim((string)$_GET['q']) : '';
+$availability = isset($_GET['availability']) ? trim((string)$_GET['availability']) : '';
+$per_page     = isset($_GET['per_page']) ? max(1, (int)$_GET['per_page']) : 10;
+$page         = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+
+if (!in_array($availability, ['', 'available', 'not available'], true)) {
+    $availability = '';
+}
+
+$where   = [];
+$params  = [];
+$types   = '';
+
+// search across name, email, phone, researchInterests (JSON text)
+if ($q !== '') {
+    $where[] = "(name LIKE ? OR contact_email LIKE ? OR contact_phone LIKE ? OR researchInterests LIKE ?)";
+    $like = '%' . $q . '%';
+    array_push($params, $like, $like, $like, $like);
+    $types .= 'ssss';
+}
+
+if ($availability !== '') {
+    $where[] = "availability = ?";
+    $params[] = $availability;
+    $types   .= 's';
+}
+
+$whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
+
+/** ------------------------------------------------------------------
+ * Count total
+ * -------------------------------------------------------------------*/
+$total = 0;
+$sqlCount = "SELECT COUNT(*) FROM professors $whereSql";
+if ($stmt = mysqli_prepare($conn, $sqlCount)) {
+    if ($types !== '') {
+        mysqli_stmt_bind_param($stmt, $types, ...$params);
+    }
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_bind_result($stmt, $total);
+    mysqli_stmt_fetch($stmt);
+    mysqli_stmt_close($stmt);
+}
+
+$total_pages = max(1, (int)ceil($total / $per_page));
+$page = min($page, $total_pages);
+$offset = ($page - 1) * $per_page;
+
+/** ------------------------------------------------------------------
+ * Fetch page data
+ * -------------------------------------------------------------------*/
+$professors = [];
+$sql = "SELECT id, name, image, researchInterests, contact_email, contact_phone, availability, profileLink
+        FROM professors
+        $whereSql
+        ORDER BY id DESC
+        LIMIT $per_page OFFSET $offset"; // ints are safe (casted above)
+
+if ($stmt = mysqli_prepare($conn, $sql)) {
+    if ($types !== '') {
+        mysqli_stmt_bind_param($stmt, $types, ...$params);
+    }
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    if ($res) {
+        while ($row = mysqli_fetch_assoc($res)) {
+            // researchInterests pretty print (JSON array or plain)
+            $ri = $row['researchInterests'];
+            $prettyRI = '';
+            if ($ri !== null && $ri !== '') {
+                $decoded = json_decode($ri, true);
+                if (is_array($decoded)) {
+                    $clean = array_values(array_filter(array_map(function ($s) {
+                        return is_string($s) ? trim($s) : '';
+                    }, $decoded), fn($v) => $v !== ''));
+                    $prettyRI = implode(', ', $clean);
+                } else {
+                    $prettyRI = $ri;
+                }
+            }
+            $row['_pretty_researchInterests'] = $prettyRI;
+
+            $row['_availability'] = (strtolower(trim((string)$row['availability'])) === 'available') ? 'available' : 'not available';
+
+            $img = trim((string)$row['image']);
+            $row['_image_url'] = $img;
+
+            $professors[] = $row;
+        }
+    }
+    mysqli_stmt_close($stmt);
+} else {
+    $_SESSION['professor-error'] = 'Failed to load professors. (' . mysqli_error($conn) . ')';
+}
+
+/** helper to build links preserving filters */
+function link_with_params($overrides = [])
+{
+    $params = [
+        'q' => $_GET['q'] ?? '',
+        'availability' => $_GET['availability'] ?? '',
+        'per_page' => $_GET['per_page'] ?? 10,
+        'page' => $_GET['page'] ?? 1,
+    ];
+    foreach ($overrides as $k => $v) $params[$k] = $v;
+    $qs = http_build_query(array_filter($params, fn($v) => $v !== '' && $v !== null));
+    return 'professor-list.php' . ($qs ? ('?' . $qs) : '');
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -16,283 +172,8 @@ $active_page = 'professors';
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
 
-    <style>
-        /* Base Styles */
-        :root {
-            --primary-color: #4361ee;
-            --secondary-color: #3f37c9;
-            --accent-color: #4895ef;
-            --light-color: #f8f9fa;
-            --dark-color: #212529;
-            --success-color: #4cc9f0;
-            --warning-color: #f72585;
-            --gray-color: #adb5bd;
-            --border-radius: 8px;
-            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f5f7fa;
-            color: var(--dark-color);
-            line-height: 1.6;
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* Main Content Styles */
-        .main-content {
-            flex: 1;
-            margin-left: 250px;
-            /* keep in sync with sidebar width */
-            min-height: 100vh;
-        }
-
-        .content {
-            padding: 24px;
-        }
-
-        .page-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            margin: 8px 0 18px;
-        }
-
-        .page-title {
-            font-size: 24px;
-            color: var(--primary-color);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 700;
-        }
-
-        .btn {
-            appearance: none;
-            border: 1px solid transparent;
-            border-radius: 10px;
-            padding: 10px 14px;
-            font-weight: 600;
-            background: var(--primary-color);
-            color: #fff;
-            cursor: pointer;
-            transition: var(--transition);
-            box-shadow: var(--box-shadow);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn:hover {
-            transform: translateY(-1px);
-            background: var(--secondary-color);
-        }
-
-        .btn.secondary {
-            background: #fff;
-            color: var(--dark-color);
-            border-color: #e5e7eb;
-        }
-
-        .btn.secondary:hover {
-            border-color: var(--accent-color);
-            color: var(--secondary-color);
-        }
-
-        .btn.small {
-            padding: 6px 10px;
-            font-size: 12px;
-            border-radius: 8px;
-            box-shadow: none;
-        }
-
-        .btn.danger {
-            background: var(--warning-color);
-        }
-
-        /* Toolbar */
-        .toolbar {
-            display: grid;
-            grid-template-columns: 1fr 220px 160px;
-            gap: 10px;
-            background: #fff;
-            padding: 12px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            margin-bottom: 14px;
-        }
-
-        .input,
-        .select {
-            width: 100%;
-            padding: 10px 12px;
-            border-radius: 10px;
-            border: 1px solid #e5e7eb;
-            outline: none;
-            transition: var(--transition);
-            background: var(--light-color);
-            font-size: 14px;
-        }
-
-        .input:focus,
-        .select:focus {
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 4px rgba(72, 149, 239, 0.15);
-            background: #fff;
-        }
-
-        /* Card & Table */
-        .card {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: var(--box-shadow);
-            overflow: hidden;
-        }
-
-        .table-wrap {
-            width: 100%;
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            min-width: 1100px;
-        }
-
-        thead th {
-            background: #f8fafc;
-            position: sticky;
-            top: 0;
-            z-index: 1;
-            text-align: left;
-            font-size: 13px;
-            color: #334155;
-            letter-spacing: .2px;
-            padding: 12px 14px;
-            border-bottom: 1px solid #eef2f7;
-            white-space: nowrap;
-        }
-
-        tbody td {
-            padding: 12px 14px;
-            border-bottom: 1px solid #f1f5f9;
-            vertical-align: middle;
-            font-size: 14px;
-        }
-
-        tbody tr:hover {
-            background: #fafafa;
-        }
-
-        /* Avatar */
-        .avatar {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #e5e7eb;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, .06);
-        }
-
-        /* Badges */
-        .badge {
-            display: inline-block;
-            padding: 6px 10px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: .3px;
-            border: 1px solid transparent;
-        }
-
-        .badge.available {
-            background: rgba(76, 201, 240, .15);
-            color: #0b7285;
-            border-color: rgba(76, 201, 240, .35);
-        }
-
-        .badge.not {
-            background: rgba(247, 37, 133, .12);
-            color: #7a073d;
-            border-color: rgba(247, 37, 133, .3);
-        }
-
-        .link {
-            color: var(--secondary-color);
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .link:hover {
-            text-decoration: underline;
-        }
-
-        /* Footer / Pagination */
-        .table-footer {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            padding: 12px;
-            border-top: 1px solid #eef2f7;
-            background: #fff;
-            flex-wrap: wrap;
-        }
-
-        .rows-meta {
-            color: #475569;
-            font-size: 14px;
-        }
-
-        .pagination {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-
-        .page-btn {
-            min-width: 36px;
-            height: 36px;
-            padding: 0 10px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid #e5e7eb;
-            background: #fff;
-            color: #111827;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: var(--transition);
-            font-weight: 600;
-        }
-
-        .page-btn:hover {
-            border-color: var(--accent-color);
-            color: var(--secondary-color);
-        }
-
-        .page-btn.active {
-            background: var(--primary-color);
-            color: #fff;
-            border-color: var(--primary-color);
-        }
-
-        .page-btn:disabled {
-            opacity: .5;
-            cursor: not-allowed;
-        }
-    </style>
+    <link rel="stylesheet" href="styles/professor-list.css">
+    <link rel="stylesheet" href="styles/style.css">
 </head>
 
 <body>
@@ -310,20 +191,41 @@ $active_page = 'professors';
                 </div>
             </div>
 
-            <div class="toolbar">
-                <input id="search" class="input" type="search" placeholder="Search by name, email, phone, or interests…" />
-                <select id="availabilityFilter" class="select">
-                    <option value="">All Availability</option>
-                    <option value="available">Available</option>
-                    <option value="not available">Not Available</option>
+            <!-- Flash messages -->
+            <?php if (!empty($_SESSION['professor-success'])): ?>
+                <div class="alert alert-success">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span><?= htmlspecialchars($_SESSION['professor-success']) ?></span>
+                </div>
+                <?php unset($_SESSION['professor-success']); ?>
+            <?php endif; ?>
+
+            <?php if (!empty($_SESSION['professor-error'])): ?>
+                <div class="alert alert-error">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span><?= htmlspecialchars($_SESSION['professor-error']) ?></span>
+                </div>
+                <?php unset($_SESSION['professor-error']); ?>
+            <?php endif; ?>
+
+            <!-- Toolbar (GET submit) -->
+            <form class="toolbar" method="get" action="professor-list.php" style="display:grid; grid-template-columns:1fr 200px 160px auto; gap:10px;">
+                <input class="input" type="search" name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Search by name, email, phone, or interests…" />
+                <select class="select" name="availability">
+                    <option value="" <?= $availability === '' ? 'selected' : ''; ?>>All Availability</option>
+                    <option value="available" <?= $availability === 'available' ? 'selected' : ''; ?>>Available</option>
+                    <option value="not available" <?= $availability === 'not available' ? 'selected' : ''; ?>>Not Available</option>
                 </select>
-                <select id="pageSize" class="select">
-                    <option value="10" selected>10 / page</option>
-                    <option value="20">20 / page</option>
-                    <option value="50">50 / page</option>
-                    <option value="100">100 / page</option>
+                <select class="select" name="per_page">
+                    <?php foreach ([10, 20, 50, 100] as $opt): ?>
+                        <option value="<?= $opt ?>" <?= $per_page === $opt ? 'selected' : ''; ?>><?= $opt ?> / page</option>
+                    <?php endforeach; ?>
                 </select>
-            </div>
+                <div style="display:flex; gap:10px; justify-content:flex-end;">
+                    <a class="btn secondary" href="professor-list.php" style="text-decoration: none;"><i class="fa-regular fa-circle-xmark"></i> Clear</a>
+                    <button class="btn" type="submit"><i class="fa-solid fa-sliders"></i> Apply</button>
+                </div>
+            </form>
 
             <div class="card">
                 <div class="table-wrap">
@@ -338,220 +240,89 @@ $active_page = 'professors';
                                 <th>Phone</th>
                                 <th style="width:140px;">Availability</th>
                                 <th>Profile Link</th>
-                                <th style="width:150px;">Created At</th>
-                                <th style="width:150px;">Updated At</th>
                                 <th style="width:180px;">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="profTbody">
-                            <?php /* 
-                PHP LOOP PLACEHOLDER — add real rows later:
-
-                <?php foreach ($professors as $prof): ?>
-                  <tr>
-                    <td><?= $prof['id'] ?></td>
-                    <td><img class="avatar" src="<?= htmlspecialchars($prof['image']) ?>" alt="<?= htmlspecialchars($prof['name']) ?>"></td>
-                    <td><?= htmlspecialchars($prof['name']) ?></td>
-                    <td><?= htmlspecialchars($prof['researchInterests']) ?></td>
-                    <td><?= htmlspecialchars($prof['contact_email']) ?></td>
-                    <td><?= htmlspecialchars($prof['contact_phone']) ?></td>
-                    <td>
-                      <?php $avail = strtolower($prof['availability']); ?>
-                      <span class="badge <?= $avail === 'available' ? 'available' : 'not' ?>">
-                        <?= htmlspecialchars($prof['availability']) ?>
-                      </span>
-                    </td>
-                    <td>
-                      <?php if (!empty($prof['profileLink'])): ?>
-                        <a class="link" href="<?= htmlspecialchars($prof['profileLink']) ?>" target="_blank" rel="noopener">Open Profile</a>
-                      <?php endif; ?>
-                    </td>
-                    <td><?= htmlspecialchars($prof['createdAt']) ?></td>
-                    <td><?= htmlspecialchars($prof['updatedAt']) ?></td>
-                    <td>
-                      <button class="btn small secondary" type="button"><i class="fa-regular fa-eye"></i> View</button>
-                      <button class="btn small" type="button"><i class="fa-regular fa-pen-to-square"></i> Edit</button>
-                      <button class="btn small danger" type="button"><i class="fa-regular fa-trash-can"></i> Delete</button>
-                    </td>
-                  </tr>
-                <?php endforeach; ?>
-              */ ?>
-
-                            <!-- Empty state (remove when real rows are rendered) -->
-                            <tr class="empty-row">
-                                <td colspan="11" style="text-align:center; color:#64748b; padding:24px;">
-                                    No professors found yet. Add a new professor to see rows here.
-                                </td>
-                            </tr>
-
-                            <!-- Optional sample static row for visual testing (comment out if not needed) -->
-                            <!--
-              <tr>
-                <td>1</td>
-                <td><img class="avatar" src="https://via.placeholder.com/88" alt="Jane Doe"></td>
-                <td>Dr. Jane Doe</td>
-                <td>AI, Machine Learning, NLP</td>
-                <td>jane.doe@example.com</td>
-                <td>+1 555 123 4567</td>
-                <td><span class="badge available">available</span></td>
-                <td><a class="link" href="#" target="_blank" rel="noopener">Open Profile</a></td>
-                <td>2025-08-01 10:22:10</td>
-                <td>2025-08-01 10:22:10</td>
-                <td>
-                  <button class="btn small secondary"><i class="fa-regular fa-eye"></i> View</button>
-                  <button class="btn small"><i class="fa-regular fa-pen-to-square"></i> Edit</button>
-                  <button class="btn small danger"><i class="fa-regular fa-trash-can"></i> Delete</button>
-                </td>
-              </tr>
-              -->
+                            <?php if (count($professors) > 0): ?>
+                                <?php foreach ($professors as $prof): ?>
+                                    <tr>
+                                        <td><?= (int)$prof['id'] ?></td>
+                                        <td>
+                                            <?php if ($prof['_image_url'] !== ''): ?>
+                                                <img class="avatar" src="../uploads/<?= htmlspecialchars($prof['_image_url']) ?>" alt="<?= htmlspecialchars($prof['name']) ?>">
+                                            <?php endif; ?>
+                                        </td>
+                                        <td><?= htmlspecialchars($prof['name'] ?? '') ?></td>
+                                        <td><?= htmlspecialchars($prof['_pretty_researchInterests'] ?? '') ?></td>
+                                        <td><?= htmlspecialchars($prof['contact_email'] ?? '') ?></td>
+                                        <td><?= htmlspecialchars($prof['contact_phone'] ?? '') ?></td>
+                                        <td>
+                                            <?php $avail = $prof['_availability']; ?>
+                                            <span class="badge <?= $avail === 'available' ? 'available' : 'not' ?>">
+                                                <?= htmlspecialchars($avail) ?>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <?php if (!empty($prof['profileLink'])): ?>
+                                                <a class="link" href="<?= htmlspecialchars($prof['profileLink']) ?>" target="_blank" rel="noopener">Open Profile</a>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <a class="btn small" href="edit-professor.php?id=<?= (int)$prof['id'] ?>" style="text-decoration: none;">
+                                                <i class="fa-regular fa-pen-to-square"></i> Edit
+                                            </a>
+                                            <form action="professor-list.php?<?= htmlspecialchars($_SERVER['QUERY_STRING'] ?? '') ?>" method="post" style="display:inline-block;" onsubmit="return confirm('Delete this professor?');">
+                                                <input type="hidden" name="id" value="<?= (int)$prof['id'] ?>">
+                                                <button class="btn small danger" type="submit" name="delete">
+                                                    <i class="fa-regular fa-trash-can"></i> Delete
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr class="empty-row">
+                                    <td colspan="9" style="text-align:center; color:#64748b; padding:24px;">
+                                        No professors found for the selected filters.
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
 
+                <!-- Server-side pagination controls -->
                 <div class="table-footer">
-                    <div class="rows-meta" id="rowsMeta">0–0 of 0</div>
-                    <div class="pagination" id="pagination"></div>
+                    <div class="rows-meta" id="rowsMeta">
+                        <?php
+                        $from = $total ? ($offset + 1) : 0;
+                        $to   = min($offset + $per_page, $total);
+                        // Use concatenation to avoid variable interpolation issues with the en dash
+                        echo htmlspecialchars($from . '–' . $to . ' of ' . $total, ENT_QUOTES, 'UTF-8');
+                        ?>
+                    </div>
+                    <div class="pagination" id="pagination">
+                        <a class="page-btn <?= $page <= 1 ? 'disabled' : '' ?>" href="<?= $page <= 1 ? 'javascript:void(0)' : link_with_params(['page' => 1]) ?>" style="text-decoration: none;">First</a>
+                        <a class="page-btn <?= $page <= 1 ? 'disabled' : '' ?>" href="<?= $page <= 1 ? 'javascript:void(0)' : link_with_params(['page' => $page - 1]) ?>" style="text-decoration: none;">Prev</a>
+                        <?php
+                        // window of pages
+                        $window = 5;
+                        $start = max(1, $page - intdiv($window, 2));
+                        $end = min($total_pages, $start + $window - 1);
+                        $start = max(1, $end - $window + 1);
+                        for ($p = $start; $p <= $end; $p++):
+                        ?>
+                            <a class="page-btn <?= $p === $page ? 'active' : '' ?>" href="<?= link_with_params(['page' => $p]) ?>" style="text-decoration: none;"><?= $p ?></a>
+                        <?php endfor; ?>
+                        <a class="page-btn <?= $page >= $total_pages ? 'disabled' : '' ?>" href="<?= $page >= $total_pages ? 'javascript:void(0)' : link_with_params(['page' => $page + 1]) ?>" style="text-decoration: none;">Next</a>
+                        <a class="page-btn <?= $page >= $total_pages ? 'disabled' : '' ?>" href="<?= $page >= $total_pages ? 'javascript:void(0)' : link_with_params(['page' => $total_pages]) ?>" style="text-decoration: none;">Last</a>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <script>
-        // Lightweight client-side pagination & filtering (no backend logic yet)
-        (function() {
-            const tbody = document.getElementById('profTbody');
-            const search = document.getElementById('search');
-            const availabilityFilter = document.getElementById('availabilityFilter');
-            const pageSizeSel = document.getElementById('pageSize');
-            const pagination = document.getElementById('pagination');
-            const rowsMeta = document.getElementById('rowsMeta');
-
-            let rows = [];
-            let filtered = [];
-            let page = 1;
-            let pageSize = parseInt(pageSizeSel.value, 10) || 10;
-
-            function collectRows() {
-                rows = Array.from(tbody.querySelectorAll('tr')).filter(tr => !tr.classList.contains('empty-row'));
-            }
-
-            function applyFilters() {
-                const q = search.value.trim().toLowerCase();
-                const av = availabilityFilter.value; // "", "available", "not available"
-
-                filtered = rows.filter(tr => {
-                    const tds = tr.querySelectorAll('td');
-                    if (!tds.length) return false;
-
-                    // Searchable columns: name (2), interests (3), email (4), phone (5)
-                    const hay = [
-                        tds[2]?.textContent || '',
-                        tds[3]?.textContent || '',
-                        tds[4]?.textContent || '',
-                        tds[5]?.textContent || ''
-                    ].join(' ').toLowerCase();
-
-                    const availabilityText = (tds[6]?.textContent || '').trim().toLowerCase();
-
-                    const matchQ = q === '' || hay.includes(q);
-                    const matchA = av === '' || availabilityText === av;
-
-                    return matchQ && matchA;
-                });
-
-                // Toggle empty-state visibility
-                const emptyRow = tbody.querySelector('.empty-row');
-                if (emptyRow) emptyRow.style.display = filtered.length ? 'none' : '';
-
-                // Clamp page
-                const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-                if (page > totalPages) page = 1;
-            }
-
-            function render() {
-                rows.forEach(tr => tr.style.display = 'none');
-
-                const total = filtered.length;
-                const totalPages = Math.max(1, Math.ceil(total / pageSize));
-                page = Math.min(Math.max(1, page), totalPages);
-
-                const startIdx = (page - 1) * pageSize;
-                const endIdx = Math.min(startIdx + pageSize, total);
-
-                for (let i = startIdx; i < endIdx; i++) {
-                    if (filtered[i]) filtered[i].style.display = '';
-                }
-
-                rowsMeta.textContent = total ? `${startIdx + 1}–${endIdx} of ${total}` : '0–0 of 0';
-                renderPagination(totalPages);
-            }
-
-            function renderPagination(totalPages) {
-                pagination.innerHTML = '';
-
-                function makeBtn(label, disabled, onClick, isActive = false) {
-                    const b = document.createElement('button');
-                    b.className = 'page-btn' + (isActive ? ' active' : '');
-                    b.textContent = label;
-                    b.disabled = !!disabled;
-                    b.addEventListener('click', onClick);
-                    pagination.appendChild(b);
-                }
-
-                makeBtn('First', page === 1, () => {
-                    page = 1;
-                    render();
-                });
-                makeBtn('Prev', page === 1, () => {
-                    page -= 1;
-                    render();
-                });
-
-                const windowSize = 5;
-                let start = Math.max(1, page - Math.floor(windowSize / 2));
-                let end = Math.min(totalPages, start + windowSize - 1);
-                start = Math.max(1, end - windowSize + 1);
-
-                for (let p = start; p <= end; p++) {
-                    makeBtn(String(p), false, () => {
-                        page = p;
-                        render();
-                    }, p === page);
-                }
-
-                makeBtn('Next', page === totalPages, () => {
-                    page += 1;
-                    render();
-                });
-                makeBtn('Last', page === totalPages, () => {
-                    page = totalPages;
-                    render();
-                });
-            }
-
-            // Event listeners
-            search.addEventListener('input', () => {
-                applyFilters();
-                render();
-            });
-            availabilityFilter.addEventListener('change', () => {
-                applyFilters();
-                render();
-            });
-            pageSizeSel.addEventListener('change', () => {
-                pageSize = parseInt(pageSizeSel.value, 10) || 10;
-                applyFilters();
-                render();
-            });
-
-            // Init
-            collectRows();
-            applyFilters();
-            render();
-
-            // If rows are injected by PHP later, call collectRows() + applyFilters() + render() afterward.
-        })();
-    </script>
 </body>
 
 </html>
