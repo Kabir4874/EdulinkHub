@@ -2,18 +2,48 @@
 require '../config/database.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-$active_page = 'add-scholarship';
+$active_page = 'scholarship-list';
 
-// fetch professors for the dropdown
+$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+if ($id <= 0) {
+    $_SESSION['funding-error'] = 'Invalid scholarship ID.';
+    header('Location: scholarship-list.php');
+    exit;
+}
+
+/* Fetch scholarship */
+$funding = null;
+if ($stmt = mysqli_prepare($conn, "SELECT id, type, title, description, link, eligibilityCriteria, applyDate, applicationDeadline, university, department, professor_id FROM fundings WHERE id = ?")) {
+    mysqli_stmt_bind_param($stmt, 'i', $id);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    $funding = mysqli_fetch_assoc($res);
+    mysqli_stmt_close($stmt);
+}
+if (!$funding) {
+    $_SESSION['funding-error'] = 'Scholarship not found.';
+    header('Location: scholarship-list.php');
+    exit;
+}
+
+/* Fetch professors for dropdown */
 $professors = [];
 $res = mysqli_query($conn, "SELECT id, name, contact_email FROM professors ORDER BY name ASC");
 if ($res) {
     while ($row = mysqli_fetch_assoc($res)) $professors[] = $row;
 }
 
-// Values to (re)fill the form after an error
-$old = $_SESSION['add-scholarship-data'] ?? [];
-unset($_SESSION['add-scholarship-data']);
+/* If we just had a validation error, repopulate values */
+$old = $_SESSION['edit-scholarship-data'] ?? [];
+unset($_SESSION['edit-scholarship-data']);
+
+$val = function ($key) use ($old, $funding) {
+    return isset($old[$key]) ? $old[$key] : ($funding[$key] ?? '');
+};
+
+$ot = strtolower($val('type'));
+$showUni  = ($ot === 'university');
+$showProf = ($ot === 'professor');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -21,7 +51,7 @@ unset($_SESSION['add-scholarship-data']);
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Add Scholarship - EduLink Hub</title>
+    <title>Edit Scholarship - EduLink Hub</title>
 
     <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -40,26 +70,20 @@ unset($_SESSION['add-scholarship-data']);
         <?php include __DIR__ . '/common/navbar.php'; ?>
 
         <div class="content">
-            <h1 class="page-title"><i class="fa-solid fa-graduation-cap"></i> Add Scholarship</h1>
+            <h1 class="page-title"><i class="fa-solid fa-pen-to-square"></i> Edit Scholarship</h1>
 
             <!-- Flash messages -->
-            <?php if (!empty($_SESSION['add-scholarship-error'])): ?>
+            <?php if (!empty($_SESSION['edit-scholarship-error'])): ?>
                 <div class="alert alert-error">
                     <i class="fa-solid fa-triangle-exclamation"></i>
-                    <span><?= htmlspecialchars($_SESSION['add-scholarship-error']) ?></span>
+                    <span><?= htmlspecialchars($_SESSION['edit-scholarship-error']) ?></span>
                 </div>
-                <?php unset($_SESSION['add-scholarship-error']); ?>
+                <?php unset($_SESSION['edit-scholarship-error']); ?>
             <?php endif; ?>
 
-            <?php if (!empty($_SESSION['add-scholarship-success'])): ?>
-                <div class="alert alert-success">
-                    <i class="fa-solid fa-circle-check"></i>
-                    <span><?= htmlspecialchars($_SESSION['add-scholarship-success']) ?></span>
-                </div>
-                <?php unset($_SESSION['add-scholarship-success']); ?>
-            <?php endif; ?>
+            <form class="sch-form" action="logic/edit-scholarship-logic.php" method="post" novalidate>
+                <input type="hidden" name="id" value="<?= (int)$funding['id'] ?>">
 
-            <form class="sch-form" action="logic/add-scholarship-logic.php" method="post" novalidate>
                 <!-- Row: Title & Type -->
                 <div class="form-row">
                     <div class="form-group">
@@ -68,14 +92,13 @@ unset($_SESSION['add-scholarship-data']);
                             type="text"
                             id="title"
                             name="title"
-                            placeholder="e.g., Full Tuition Merit Scholarship"
                             required
-                            value="<?= isset($old['title']) ? htmlspecialchars($old['title']) : '' ?>">
+                            placeholder="e.g., Full Tuition Merit Scholarship"
+                            value="<?= htmlspecialchars($val('title')) ?>">
                     </div>
 
                     <div class="form-group">
                         <label for="type">Type</label>
-                        <?php $ot = strtolower($old['type'] ?? ''); ?>
                         <select id="type" name="type" required>
                             <option value="" <?= $ot === '' ? 'selected' : '' ?>>Select type</option>
                             <option value="university" <?= $ot === 'university' ? 'selected' : '' ?>>University</option>
@@ -91,55 +114,53 @@ unset($_SESSION['add-scholarship-data']);
                         type="url"
                         id="link"
                         name="link"
-                        placeholder="https://example.edu/scholarships/merit-2025"
                         required
-                        value="<?= isset($old['link']) ? htmlspecialchars($old['link']) : '' ?>">
+                        placeholder="https://example.edu/scholarships/merit-2025"
+                        value="<?= htmlspecialchars($val('link')) ?>">
                 </div>
 
                 <!-- Dates -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="applyDate">Application Start Date</label>
-                        <input type="date" id="applyDate" name="applyDate" value="<?= isset($old['applyDate']) ? htmlspecialchars($old['applyDate']) : '' ?>">
+                        <input type="date" id="applyDate" name="applyDate" value="<?= htmlspecialchars($val('applyDate')) ?>">
                     </div>
 
                     <div class="form-group">
                         <label for="applicationDeadline">Application Deadline</label>
-                        <input type="date" id="applicationDeadline" name="applicationDeadline" value="<?= isset($old['applicationDeadline']) ? htmlspecialchars($old['applicationDeadline']) : '' ?>">
+                        <input type="date" id="applicationDeadline" name="applicationDeadline" value="<?= htmlspecialchars($val('applicationDeadline')) ?>">
                     </div>
                 </div>
 
                 <!-- Description -->
                 <div class="form-group">
                     <label for="description">Description</label>
-                    <textarea id="description" name="description" placeholder="Brief description of the scholarship, benefits, duration, etc."><?= isset($old['description']) ? htmlspecialchars($old['description']) : '' ?></textarea>
+                    <textarea id="description" name="description" placeholder="Brief description of the scholarship, benefits, duration, etc."><?= htmlspecialchars($val('description')) ?></textarea>
                 </div>
 
                 <!-- Eligibility -->
                 <div class="form-group">
                     <label for="eligibilityCriteria">Eligibility Criteria</label>
-                    <textarea id="eligibilityCriteria" name="eligibilityCriteria" placeholder="Eligibility requirements (e.g., GPA, nationality, discipline)"><?= isset($old['eligibilityCriteria']) ? htmlspecialchars($old['eligibilityCriteria']) : '' ?></textarea>
+                    <textarea id="eligibilityCriteria" name="eligibilityCriteria" placeholder="Eligibility requirements (e.g., GPA, nationality, discipline)"><?= htmlspecialchars($val('eligibilityCriteria')) ?></textarea>
                 </div>
 
                 <!-- UNIVERSITY SECTION -->
-                <?php
-                $showUni = ($ot === 'university');
-                $showProf = ($ot === 'professor');
-                ?>
                 <div id="universitySection" class="section" style="<?= $showUni ? '' : 'display:none;' ?>">
                     <div class="section-title"><i class="fa-solid fa-building-columns"></i> University Details</div>
                     <div class="form-row">
                         <div class="form-group">
                             <label for="university">University</label>
-                            <input type="text" id="university" name="university" placeholder="e.g., University of XYZ"
+                            <input type="text" id="university" name="university"
+                                placeholder="e.g., University of XYZ"
                                 <?= $showUni ? 'required' : '' ?>
-                                value="<?= isset($old['university']) ? htmlspecialchars($old['university']) : '' ?>">
+                                value="<?= htmlspecialchars($val('university')) ?>">
                         </div>
                         <div class="form-group">
                             <label for="department">Department</label>
-                            <input type="text" id="department" name="department" placeholder="e.g., Computer Science"
+                            <input type="text" id="department" name="department"
+                                placeholder="e.g., Computer Science"
                                 <?= $showUni ? 'required' : '' ?>
-                                value="<?= isset($old['department']) ? htmlspecialchars($old['department']) : '' ?>">
+                                value="<?= htmlspecialchars($val('department')) ?>">
                         </div>
                     </div>
                     <div class="hint">This section is required for university-type scholarships.</div>
@@ -152,9 +173,13 @@ unset($_SESSION['add-scholarship-data']);
                         <label for="professor_id">Professor</label>
                         <select id="professor_id" name="professor_id" <?= $showProf ? 'required' : '' ?>>
                             <option value="">Select a professor</option>
-                            <?php foreach ($professors as $p): ?>
-                                <option value="<?= (int)$p['id'] ?>" <?= (isset($old['professor_id']) && (int)$old['professor_id'] === (int)$p['id']) ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($p['name']) ?> <?= $p['contact_email'] ? '— ' . htmlspecialchars($p['contact_email']) : '' ?>
+                            <?php
+                            $selProf = $val('professor_id');
+                            foreach ($professors as $p):
+                                $label = $p['name'] . (!empty($p['contact_email']) ? ' — ' . $p['contact_email'] : '');
+                            ?>
+                                <option value="<?= (int)$p['id'] ?>" <?= ((int)$selProf === (int)$p['id']) ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($label) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -163,7 +188,7 @@ unset($_SESSION['add-scholarship-data']);
                 </div>
 
                 <button type="submit" name="submit" class="submit-btn">
-                    <i class="fa-solid fa-check-circle"></i> Submit
+                    <i class="fa-solid fa-check-circle"></i> Update
                 </button>
             </form>
         </div>

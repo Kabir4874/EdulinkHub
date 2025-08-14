@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 12, 2025 at 07:01 PM
+-- Generation Time: Aug 14, 2025 at 04:57 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -94,9 +94,6 @@ CREATE TABLE `exam_units` (
 --
 
 INSERT INTO `exam_units` (`id`, `university_id`, `unit`, `date`) VALUES
-(1, 1, 'Mathematics', '2024-02-20'),
-(2, 1, 'Computer Science Fundamentals', '2024-02-22'),
-(3, 1, 'English Proficiency', '2024-02-25'),
 (4, 2, 'AI Algorithms', '2024-03-05'),
 (5, 2, 'Machine Learning', '2024-03-08'),
 (6, 2, 'Neural Networks', '2024-03-12'),
@@ -118,7 +115,7 @@ INSERT INTO `exam_units` (`id`, `university_id`, `unit`, `date`) VALUES
 
 CREATE TABLE `fundings` (
   `id` int(11) NOT NULL,
-  `type` enum('scholarship','professor') NOT NULL,
+  `type` enum('university','professor') NOT NULL,
   `title` varchar(255) NOT NULL,
   `description` text NOT NULL,
   `link` varchar(255) NOT NULL,
@@ -137,11 +134,13 @@ CREATE TABLE `fundings` (
 --
 
 INSERT INTO `fundings` (`id`, `type`, `title`, `description`, `link`, `eligibilityCriteria`, `applyDate`, `applicationDeadline`, `university`, `department`, `professor_id`, `createdAt`, `updatedAt`) VALUES
-(1, 'scholarship', 'Excellence in Computer Science', 'This scholarship supports outstanding students pursuing undergraduate degrees in Computer Science. Provides full tuition and a living stipend.', 'https://university.edu/scholarships/excellence-cs', 'Minimum GPA of 3.8, demonstrated financial need, and strong letters of recommendation.', '2023-09-01', '2024-03-15', 'Harvard University', 'Computer Science', NULL, '2025-07-31 16:51:12', '2025-07-31 16:51:12'),
-(2, 'scholarship', 'Global Leaders Program', 'Merit-based scholarship for international students showing exceptional leadership potential. Covers tuition and accommodation.', 'https://university.edu/scholarships/global-leaders', 'International student status, leadership experience, and community involvement.', '2023-10-01', '2024-02-28', 'Stanford University', 'International Programs', NULL, '2025-07-31 16:51:12', '2025-07-31 16:51:12'),
+(1, '', 'Excellence in Computer Science', 'This scholarship supports outstanding students pursuing undergraduate degrees in Computer Science. Provides full tuition and a living stipend.', 'https://university.edu/scholarships/excellence-cs', 'Minimum GPA of 3.8, demonstrated financial need, and strong letters of recommendation.', '2023-09-01', '2024-03-15', 'Harvard University', 'Computer Science', NULL, '2025-07-31 16:51:12', '2025-07-31 16:51:12'),
+(2, '', 'Global Leaders Program', 'Merit-based scholarship for international students showing exceptional leadership potential. Covers tuition and accommodation.', 'https://university.edu/scholarships/global-leaders', 'International student status, leadership experience, and community involvement.', '2023-10-01', '2024-02-28', 'Stanford University', 'International Programs', NULL, '2025-07-31 16:51:12', '2025-07-31 16:51:12'),
 (3, 'professor', 'AI Research Grant', 'Funding for professors conducting cutting-edge research in artificial intelligence and machine learning. Provides equipment and research assistant support.', 'https://university.edu/grants/ai-research', 'Tenured or tenure-track faculty position in Computer Science or related field.', '2023-11-01', '2024-04-15', 'MIT', 'Computer Science', NULL, '2025-07-31 16:51:12', '2025-07-31 16:51:12'),
 (4, 'professor', 'Quantum Computing Initiative', 'Grant program supporting research in quantum computing and quantum information science. Includes funding for lab equipment and travel.', 'https://university.edu/grants/quantum-initiative', 'Faculty position in Physics, Computer Science, or Engineering with focus on quantum technologies.', '2023-12-01', '2024-05-30', 'Princeton University', 'Physics', 2, '2025-07-31 16:51:12', '2025-07-31 16:51:12'),
-(5, 'scholarship', 'Women in STEM Scholarship', 'Supports female students pursuing degrees in science, technology, engineering, and mathematics. Provides mentorship in addition to financial support.', 'https://university.edu/scholarships/women-stem', 'Female student enrolled in STEM program, minimum GPA of 3.5, and demonstrated commitment to community service.', '2023-09-15', '2024-04-01', 'UC Berkeley', 'STEM Programs', NULL, '2025-07-31 16:51:12', '2025-07-31 16:51:12');
+(5, '', 'Women in STEM Scholarship', 'Supports female students pursuing degrees in science, technology, engineering, and mathematics. Provides mentorship in addition to financial support.', 'https://university.edu/scholarships/women-stem', 'Female student enrolled in STEM program, minimum GPA of 3.5, and demonstrated commitment to community service.', '2023-09-15', '2024-04-01', 'UC Berkeley', 'STEM Programs', NULL, '2025-07-31 16:51:12', '2025-07-31 16:51:12'),
+(7, 'professor', 'Eum qui pariatur De', 'Qui optio maxime do', 'https://www.qyhabidovokim.co.uk', 'Omnis illum nisi er', '1984-05-21', '2020-09-03', NULL, NULL, 6, '2025-08-14 14:22:02', '2025-08-14 14:37:19'),
+(9, 'university', 'At omnis praesentium', 'Esse maxime irure ea', 'https://www.purapi.us', 'Repellendus Ullam u', '1986-09-29', '1974-10-07', 'asfsdf', 'asdfsdf', NULL, '2025-08-14 14:56:30', '2025-08-14 14:56:30');
 
 -- --------------------------------------------------------
 
@@ -248,11 +247,11 @@ CREATE TABLE `universities` (
 --
 
 INSERT INTO `universities` (`id`, `name`, `location`, `programType`, `discipline`, `admissionLink`, `applicationDate`, `applicationDeadline`, `admitCardDownloadDate`, `image`, `createdAt`, `updatedAt`) VALUES
-(1, 'Harvard University', 'Cambridge, MA', 'undergraduate', 'Computer Science', 'https://harvard.edu/apply', '2023-09-01', '2023-12-15', '2024-01-15', 'https://example.com/images/harvard.jpg', '2025-07-31 16:49:06', '2025-07-31 16:49:06'),
 (2, 'Stanford University', 'Stanford, CA', 'postgraduate', 'Artificial Intelligence', 'https://stanford.edu/admissions', '2023-10-01', '2024-01-20', '2024-02-10', 'https://example.com/images/stanford.jpg', '2025-07-31 16:49:06', '2025-07-31 16:49:06'),
 (3, 'MIT', 'Cambridge, MA', 'Ph.D.', 'Robotics', 'https://mit.edu/admissions', '2023-11-01', '2024-02-15', '2024-03-01', 'https://example.com/images/mit.jpg', '2025-07-31 16:49:06', '2025-07-31 16:49:06'),
 (4, 'UC Berkeley', 'Berkeley, CA', 'undergraduate', 'Data Science', 'https://berkeley.edu/apply', '2023-09-15', '2023-11-30', '2024-01-05', 'https://example.com/images/berkeley.jpg', '2025-07-31 16:49:06', '2025-07-31 16:49:06'),
-(5, 'Princeton University', 'Princeton, NJ', 'postgraduate', 'Quantum Computing', 'https://princeton.edu/admissions', '2023-10-15', '2024-01-10', '2024-02-01', 'https://example.com/images/princeton.jpg', '2025-07-31 16:49:06', '2025-07-31 16:49:06');
+(5, 'Princeton University', 'Princeton, NJ', 'postgraduate', 'Quantum Computing', 'https://princeton.edu/admissions', '2023-10-15', '2024-01-10', '2024-02-01', 'https://example.com/images/princeton.jpg', '2025-07-31 16:49:06', '2025-07-31 16:49:06'),
+(6, 'Malik Price', 'Qui eum dolore vero', 'postgraduate', 'Labore et omnis veli', 'https://www.huhirypiluxutap.mobi', '1986-01-30', '1991-04-05', '2020-04-14', '1755093698_66556ec97b88f52a8e180d84-apple-watch-gen-8-series-8-45mm.jpg', '2025-08-13 13:50:46', '2025-08-13 14:01:38');
 
 -- --------------------------------------------------------
 
@@ -394,7 +393,7 @@ ALTER TABLE `exam_units`
 -- AUTO_INCREMENT for table `fundings`
 --
 ALTER TABLE `fundings`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `professors`
@@ -418,7 +417,7 @@ ALTER TABLE `reviews`
 -- AUTO_INCREMENT for table `universities`
 --
 ALTER TABLE `universities`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `users`
