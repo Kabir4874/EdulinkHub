@@ -9,48 +9,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
-  <header class="hero">
-    <nav class="navbar">
-      <div class="logo">
-        <img src="../images/logo.png" alt="EdUHub Logo" class="logo-img">
-      </div>
-      <ul class="nav-links">
-        <li><a href="../index.html">Home</a></li>
-        <li class="dropdown">
-          <a href="#">Books ▾</a>
-          <ul class="dropdown-content">
-            <li><a href="../HTML/web-development.html">Web Development</a></li>
-            <li><a href="#">Design</a></li>
-            <li><a href="../HTML/ai-ml-books.html">AI & ML</a></li>
-            <li><a href="../HTML/admission.html">Admission (100+ Books)</a></li>
-            <li><a href="../HTML/public-private-job.html">Public & Private Job (100+ Books)</a></li>
-            <li><a href="#">BCS (100+ Books)</a></li>
-            <li><a href="#">IT & Software (100+ Books)</a></li>
-            <li><a href="../HTML/academic-books.html">Academic (100+ Books)</a></li>
-            <li><a href="#">Language (100+ Books)</a></li>
-          </ul>
-        </li>
-        <li class="dropdown">
-          <a href="#">Study Abroad ▾</a>
-          <ul class="dropdown-content">
-            <li><a href="../HTML/professors.html">Professors</a></li>
-            <li><a href="../HTML/scholarship.html">Scholarship</a></li>
-          </ul>
-        </li>
-        <a href="../HTML/admission.html" class="btn">Admission</a>
-        <li><a href="../HTML/about-contact.html">About & Contact</a></li>
-      </ul>
-      <div class="user-profile" id="userProfile">
-        <img src="../images/Profile.jpg" alt="User" class="profile-pic" />
-        <div class="user-dropdown">
-          <a href="../HTML/profile.html">Profile</a>
-          <a href="../HTML/settings.html">Settings</a>
-          <a href="#">Logout</a>
-        </div>
-      </div>
-    </nav>
-  </header>
-
+  <?php require 'header.php'; ?>
   <section class="about">
     <h2>About EduLink Hub</h2>
     <p>EduLink Hub is an innovative educational platform offering students access to admission links, learning resources, programming tutorials, and funding support. We empower learners to make informed decisions and connect with educators globally.</p>
@@ -89,9 +48,7 @@
     </div>
   </section>
 
-  <footer class="footer">
-    <p>&copy; 2025 EduLink Hub. All rights reserved.</p>
-  </footer>
+  <?php require 'footer.php'; ?>
 
   <script>
     const profile = document.getElementById('userProfile');
