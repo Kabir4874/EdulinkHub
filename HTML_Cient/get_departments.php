@@ -12,7 +12,7 @@ if ($conn->connect_error) {
 $university = $_GET['university'] ?? '';
 
 if (!empty($university)) {
-    $stmt = $conn->prepare("SELECT DISTINCT department FROM opportunities WHERE university = ? AND department IS NOT NULL ORDER BY department");
+    $stmt = $conn->prepare("SELECT DISTINCT department FROM fundings WHERE university = ? AND department IS NOT NULL ORDER BY department");
     $stmt->bind_param('s', $university);
     $stmt->execute();
     $result = $stmt->get_result();
