@@ -1,3 +1,7 @@
+<?php
+ require '../config/database.php';
+?>
+
 <!DOCTYPE php>
 <php lang="en">
 <head>
@@ -987,18 +991,34 @@
             </div>
           </div>
 
+          <?php
+          // Fetch user's profile picture
+$profilePicture = '../images/default-profile.jpg'; // default image
+if (isset($_SESSION['user_id'])) {
+    $userId = $_SESSION['user_id'];
+    $stmt = mysqli_prepare($conn, "SELECT profilePicture FROM users WHERE id = ?");
+    mysqli_stmt_bind_param($stmt, 'i', $userId);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_bind_result($stmt, $dbProfilePicture);
+    if (mysqli_stmt_fetch($stmt)) {
+        if (!empty($dbProfilePicture)) {
+            $profilePicture = '../uploads/' . $dbProfilePicture;
+        }
+    }
+    mysqli_stmt_close($stmt);
+}?>
           <!-- User Profile with Animation -->
-          <div class="user-profile" id="userProfile">
-            <div class="profile-pic-container">
-              <img src="../images/Profile.jpg" alt="User" class="profile-pic" />
-              <div class="active-indicator"></div>
-            </div>
-            <div class="user-dropdown">
-              <a href="profile1.php"><i class="fas fa-user-circle"></i> Profile</a>
-              <a href="settings1.php"><i class="fas fa-cog"></i> Settings</a>
-              <a href="login.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
-            </div>
-          </div>
+<div class="user-profile" id="userProfile">
+    <div class="profile-pic-container">
+        <img src="<?php echo htmlspecialchars($profilePicture); ?>" alt="User" class="profile-pic" />
+        <div class="active-indicator"></div>
+    </div>
+    <div class="user-dropdown">
+        <a href="profile1.php"><i class="fas fa-user-circle"></i> Profile</a>
+        <a href="settings1.php"><i class="fas fa-cog"></i> Settings</a>
+        <a href="login.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+</div>
         </div>
       </div>
     </nav>
