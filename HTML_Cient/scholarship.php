@@ -194,10 +194,10 @@ if (!empty($university)) {
         <?php if ($result->num_rows > 0): ?>
             <?php while ($opportunity = $result->fetch_assoc()): ?>
                 <div class="scholarship-card">
-                    <div class="card-image">
+                    <!-- <div class="card-image">
                         <img src="<?= !empty($opportunity['image']) ? htmlspecialchars($opportunity['image']) : '../images/default-' . $current_tab . '.jpg' ?>" 
                              alt="<?= htmlspecialchars($opportunity['title']) ?>">
-                    </div>
+                    </div> -->
                     <div class="card-content">
                         <h3><?= htmlspecialchars($opportunity['title']) ?></h3>
                         

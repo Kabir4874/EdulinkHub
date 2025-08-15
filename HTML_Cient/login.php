@@ -4,7 +4,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://kit.fontawesome.com/64d58efce2.js" crossorigin="anonymous"></script>
+  <!-- Replace your current Font Awesome script with this -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="../CSS/login_client.css" />
   <title>Sign in & Sign up Form</title>
   <style>
@@ -381,7 +382,7 @@
 
 .error-message {
     position: fixed;
-    top: 20px;
+    top: -50px;
     left: 50%;
     transform: translateX(-50%);
     background-color: #f44336;

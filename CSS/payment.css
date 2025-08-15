@@ -199,7 +199,57 @@ body {
     font-weight: 500;
     color: #1f2937;
 }
+.method-icon{
+    width: 40px;
+}
 
+/* Add this CSS for the success message */
+    .success-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .success-message {
+      background-color: white;
+      padding: 30px;
+      border-radius: 10px;
+      text-align: center;
+      max-width: 400px;
+      transform: translateY(20px);
+      transition: transform 0.3s ease;
+    }
+    
+    .success-message i {
+      color: #4CAF50;
+      font-size: 50px;
+      margin-bottom: 20px;
+    }
+    
+    .success-message h2 {
+      color: #4CAF50;
+      margin-bottom: 10px;
+    }
+    
+    .success-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .success-overlay.active .success-message {
+      transform: translateY(0);
+    }
+  
 /* Form Groups */
 .form-group {
     margin-bottom: 20px;
