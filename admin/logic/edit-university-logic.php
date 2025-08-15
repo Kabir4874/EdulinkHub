@@ -1,13 +1,11 @@
 <?php
 require '../../config/database.php';
-if (session_status() === PHP_SESSION_NONE) session_start();
 
 if (!isset($_POST['submit'])) {
     header('location: ' . ROOT_URL . 'admin/university-list.php');
     exit;
 }
 
-/* ---------------- Collect & sanitize ---------------- */
 $id            = isset($_POST['id']) ? (int)$_POST['id'] : 0;
 $name          = trim(filter_var($_POST['name'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 $location      = trim(filter_var($_POST['location'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
@@ -26,7 +24,6 @@ if ($id <= 0) {
     exit;
 }
 
-/* Preserve for re-fill on error */
 $_SESSION['edit-university-data'] = [
     'name'                   => $name,
     'location'               => $location,
@@ -38,7 +35,6 @@ $_SESSION['edit-university-data'] = [
     'admitCardDownloadDate'  => $admitCardDownloadDate,
 ];
 
-/* ---------------- Validation ---------------- */
 if ($name === '') {
     $_SESSION['edit-university-error'] = 'Please enter university name.';
 } elseif ($location === '') {
@@ -51,7 +47,6 @@ if ($name === '') {
     $_SESSION['edit-university-error'] = 'Please provide a valid admission link (URL).';
 }
 
-/* Date format checks (optional fields) */
 $validDate = function ($d) {
     if ($d === '') return true;
     $dt = DateTime::createFromFormat('Y-m-d', $d);
@@ -63,9 +58,8 @@ if (empty($_SESSION['edit-university-error'])) {
     }
 }
 
-/* ---------------- Optional image upload ---------------- */
 $uploadsDir = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR;
-$newImageFile = ''; // set when a new file is saved
+$newImageFile = '';
 
 if (empty($_SESSION['edit-university-error']) && $image && !empty($image['name'])) {
     $allowedImg = ['png', 'jpg', 'jpeg', 'webp'];
@@ -90,14 +84,12 @@ if (empty($_SESSION['edit-university-error']) && $image && !empty($image['name']
     }
 }
 
-/* On any validation/upload error */
 if (!empty($_SESSION['edit-university-error'])) {
     if ($newImageFile && is_file($uploadsDir . $newImageFile)) @unlink($uploadsDir . $newImageFile);
     header('location: ' . ROOT_URL . 'admin/edit-university.php?id=' . $id);
     exit;
 }
 
-/* ---------------- Build dynamic UPDATE ---------------- */
 $cols   = [
     'name = ?',
     'location = ?',
@@ -132,7 +124,6 @@ if ($newImageFile !== '') {
     $params[] = $newImageFile;
 }
 
-/* WHERE id = ? */
 $types  .= 'i';
 $params[] = $id;
 
@@ -156,7 +147,6 @@ if (!$ok) {
 }
 mysqli_stmt_close($stmt);
 
-/* Remove old image only after successful update and only if a new image was saved */
 if ($newImageFile !== '' && $existingImage !== '') {
     $oldAbs = $uploadsDir . ltrim($existingImage, '/\\');
     if (is_file($oldAbs)) {
@@ -164,7 +154,6 @@ if ($newImageFile !== '' && $existingImage !== '') {
     }
 }
 
-/* ---------------- Success ---------------- */
 unset($_SESSION['edit-university-data']);
 $_SESSION['edit-university-success'] = 'University updated successfully.';
 header('location: ' . ROOT_URL . 'admin/university-list.php');

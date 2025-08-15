@@ -1,13 +1,11 @@
 <?php
 require '../../config/database.php';
-if (session_status() === PHP_SESSION_NONE) session_start();
 
 if (!isset($_POST['submit'])) {
     header('location: ' . ROOT_URL . 'admin/add-scholarship.php');
     exit;
 }
 
-/* ---------------- Collect & sanitize ---------------- */
 $type         = strtolower(trim((string)($_POST['type'] ?? '')));
 $title        = trim(filter_var($_POST['title'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 $description  = trim(filter_var($_POST['description'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
@@ -16,12 +14,10 @@ $eligibility  = trim(filter_var($_POST['eligibilityCriteria'] ?? '', FILTER_SANI
 $applyDate    = trim((string)($_POST['applyDate'] ?? ''));
 $deadline     = trim((string)($_POST['applicationDeadline'] ?? ''));
 
-// Conditional fields
 $university   = trim(filter_var($_POST['university'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 $department   = trim(filter_var($_POST['department'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 $professor_id = isset($_POST['professor_id']) && $_POST['professor_id'] !== '' ? (int)$_POST['professor_id'] : null;
 
-/* Preserve for re-fill on error */
 $_SESSION['add-scholarship-data'] = [
     'type' => $type,
     'title' => $title,
@@ -35,7 +31,6 @@ $_SESSION['add-scholarship-data'] = [
     'professor_id' => $professor_id
 ];
 
-/* ---------------- Validation ---------------- */
 if (!in_array($type, ['university', 'professor'], true)) {
     $_SESSION['add-scholarship-error'] = 'Please select a valid type (University or Professor).';
 } elseif ($title === '') {
@@ -47,8 +42,8 @@ if (!in_array($type, ['university', 'professor'], true)) {
         if ($university === '' || $department === '') {
             $_SESSION['add-scholarship-error'] = 'University and Department are required for University-type scholarships.';
         }
-        $professor_id = null; // ensure null for DB
-    } else { // professor
+        $professor_id = null;
+    } else {
         if (!$professor_id || $professor_id <= 0) {
             $_SESSION['add-scholarship-error'] = 'Please select a valid professor.';
         }
@@ -57,7 +52,6 @@ if (!in_array($type, ['university', 'professor'], true)) {
     }
 }
 
-/* Date format checks (optional fields) */
 $validDate = function ($d) {
     if ($d === '') return true;
     $dt = DateTime::createFromFormat('Y-m-d', $d);
@@ -74,13 +68,11 @@ if (!empty($_SESSION['add-scholarship-error'])) {
     exit;
 }
 
-/* ---------------- Build dynamic INSERT with NULLs ---------------- */
 $cols   = ['type', 'title', 'description', 'link', 'eligibilityCriteria'];
 $place  = ['?', '?', '?', '?', '?'];
 $types  = 'sssss';
 $params = [$type, $title, $description, $link, $eligibility];
 
-// applyDate
 $cols[] = 'applyDate';
 if ($applyDate === '') {
     $place[] = 'NULL';
@@ -90,7 +82,6 @@ if ($applyDate === '') {
     $params[] = $applyDate;
 }
 
-// applicationDeadline
 $cols[] = 'applicationDeadline';
 if ($deadline === '') {
     $place[] = 'NULL';
@@ -100,7 +91,6 @@ if ($deadline === '') {
     $params[] = $deadline;
 }
 
-// university
 $cols[] = 'university';
 if ($university === '') {
     $place[] = 'NULL';
@@ -110,7 +100,6 @@ if ($university === '') {
     $params[] = $university;
 }
 
-// department
 $cols[] = 'department';
 if ($department === '') {
     $place[] = 'NULL';
@@ -120,7 +109,6 @@ if ($department === '') {
     $params[] = $department;
 }
 
-// professor_id
 $cols[] = 'professor_id';
 if (empty($professor_id)) {
     $place[] = 'NULL';
@@ -152,7 +140,6 @@ if (!$ok) {
 
 mysqli_stmt_close($stmt);
 
-/* ---------------- Success ---------------- */
 unset($_SESSION['add-scholarship-data']);
 $_SESSION['add-scholarship-success'] = 'Scholarship added successfully.';
 header('location: ' . ROOT_URL . 'admin/scholarship-list.php');

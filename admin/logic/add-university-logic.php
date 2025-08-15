@@ -1,27 +1,23 @@
 <?php
 require '../../config/database.php';
-if (session_status() === PHP_SESSION_NONE) session_start();
 
 if (!isset($_POST['submit'])) {
     header('location: ' . ROOT_URL . 'admin/add-university.php');
     exit;
 }
 
-/* ---------------- Collect & sanitize ---------------- */
 $name        = trim(filter_var($_POST['name']        ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 $location    = trim(filter_var($_POST['location']    ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 $programType = trim((string)($_POST['programType']   ?? ''));
 $discipline  = trim(filter_var($_POST['discipline']  ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-$admissionLink = trim((string)($_POST['admissionLink'] ?? '')); // required URL
+$admissionLink = trim((string)($_POST['admissionLink'] ?? ''));
 
-// optional dates (nullable)
 $applicationDate        = trim((string)($_POST['applicationDate']        ?? ''));
 $applicationDeadline    = trim((string)($_POST['applicationDeadline']    ?? ''));
 $admitCardDownloadDate  = trim((string)($_POST['admitCardDownloadDate']  ?? ''));
 
 $image = $_FILES['image'] ?? null;
 
-/* Preserve for re-fill on error */
 $_SESSION['add-university-data'] = [
     'name'                   => $name,
     'location'               => $location,
@@ -33,7 +29,6 @@ $_SESSION['add-university-data'] = [
     'admitCardDownloadDate'  => $admitCardDownloadDate,
 ];
 
-/* ---------------- Validation ---------------- */
 if ($name === '') {
     $_SESSION['add-university-error'] = 'Please enter university name.';
 } elseif ($location === '') {
@@ -46,7 +41,6 @@ if ($name === '') {
     $_SESSION['add-university-error'] = 'Please provide a valid admission link (URL).';
 }
 
-/* Optional: validate date formats YYYY-MM-DD if provided */
 $validDate = function ($d) {
     if ($d === '') return true;
     $dt = DateTime::createFromFormat('Y-m-d', $d);
@@ -58,8 +52,7 @@ if (empty($_SESSION['add-university-error'])) {
     }
 }
 
-/* ---------------- Image upload (optional) ---------------- */
-$imageFileName = ''; // filename stored in DB
+$imageFileName = '';
 $uploadsDir = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR;
 
 if (empty($_SESSION['add-university-error']) && $image && !empty($image['name'])) {
@@ -85,20 +78,17 @@ if (empty($_SESSION['add-university-error']) && $image && !empty($image['name'])
     }
 }
 
-/* On any validation/upload error */
 if (!empty($_SESSION['add-university-error'])) {
     if ($imageFileName && is_file($uploadsDir . $imageFileName)) @unlink($uploadsDir . $imageFileName);
     header('location: ' . ROOT_URL . 'admin/add-university.php');
     exit;
 }
 
-/* ---------------- Build dynamic INSERT (handle NULLs for optional dates/image) ---------------- */
 $cols   = ['name', 'location', 'programType', 'discipline', 'admissionLink'];
 $place  = ['?', '?', '?', '?', '?'];
 $types  = 'sssss';
 $params = [$name, $location, $programType, $discipline, $admissionLink];
 
-// applicationDate
 $cols[] = 'applicationDate';
 if ($applicationDate === '') {
     $place[] = 'NULL';
@@ -108,7 +98,6 @@ if ($applicationDate === '') {
     $params[] = $applicationDate;
 }
 
-// applicationDeadline
 $cols[] = 'applicationDeadline';
 if ($applicationDeadline === '') {
     $place[] = 'NULL';
@@ -118,7 +107,6 @@ if ($applicationDeadline === '') {
     $params[] = $applicationDeadline;
 }
 
-// admitCardDownloadDate
 $cols[] = 'admitCardDownloadDate';
 if ($admitCardDownloadDate === '') {
     $place[] = 'NULL';
@@ -128,7 +116,6 @@ if ($admitCardDownloadDate === '') {
     $params[] = $admitCardDownloadDate;
 }
 
-// image (optional)
 $cols[] = 'image';
 if ($imageFileName === '') {
     $place[] = 'NULL';
@@ -162,7 +149,6 @@ if (!$ok) {
 
 mysqli_stmt_close($stmt);
 
-/* ---------------- Success ---------------- */
 unset($_SESSION['add-university-data']);
 $_SESSION['add-university-success'] = 'University added successfully.';
 header('location: ' . ROOT_URL . 'admin/university-list.php');

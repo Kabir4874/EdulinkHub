@@ -1,10 +1,9 @@
 <?php
 require '../config/database.php';
-if (session_status() === PHP_SESSION_NONE) session_start();
+require __DIR__ . '/auth-check.php';
 
 $active_page = 'add-professor';
 
-// Values to (re)fill the form after an error
 $old = $_SESSION['add-professor-data'] ?? [];
 unset($_SESSION['add-professor-data']);
 ?>
@@ -16,13 +15,11 @@ unset($_SESSION['add-professor-data']);
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Add Professor - EduLink Hub</title>
 
-    <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
 
-    <!-- Page styles + shared message styles -->
     <link rel="stylesheet" href="styles/add-professor.css">
     <link rel="stylesheet" href="styles/style.css">
 </head>
@@ -36,7 +33,6 @@ unset($_SESSION['add-professor-data']);
         <div class="content">
             <h1 class="page-title"><i class="fa-solid fa-user-plus"></i> Enter Professor Details</h1>
 
-            <!-- Flash messages -->
             <?php if (!empty($_SESSION['add-professor-error'])): ?>
                 <div class="alert alert-error">
                     <i class="fa-solid fa-triangle-exclamation"></i>
@@ -45,11 +41,9 @@ unset($_SESSION['add-professor-data']);
                 <?php unset($_SESSION['add-professor-error']); ?>
             <?php endif; ?>
 
-
-
             <form class="professor-form" action="logic/add-professor-logic.php" method="post" enctype="multipart/form-data">
                 <div class="form-group">
-                    <label for="name">Professor Name</label>
+                    <label for="name">Professor Name <span class="req">*</span></label>
                     <input
                         type="text"
                         id="name"
@@ -59,19 +53,42 @@ unset($_SESSION['add-professor-data']);
                         value="<?= isset($old['name']) ? htmlspecialchars($old['name']) : '' ?>">
                 </div>
 
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="country">Country</label>
+                        <input
+                            type="text"
+                            id="country"
+                            name="country"
+                            placeholder="e.g., Bangladesh"
+                            value="<?= isset($old['country']) ? htmlspecialchars($old['country']) : '' ?>">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="university_name">University Name</label>
+                        <input
+                            type="text"
+                            id="university_name"
+                            name="university_name"
+                            placeholder="e.g., University of Dhaka"
+                            value="<?= isset($old['university_name']) ? htmlspecialchars($old['university_name']) : '' ?>">
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label for="researchInterests">Research Interests (comma separated)</label>
                     <input
                         type="text"
                         id="researchInterests"
                         name="researchInterests"
-                        placeholder="e.g. AI, Machine Learning, Data Science"
+                        placeholder="e.g. Artificial Intelligence, Machine Learning, Data Mining"
                         value="<?= isset($old['researchInterests']) ? htmlspecialchars($old['researchInterests']) : '' ?>">
+                    <span class="hint">You can leave blank, or enter multiple topics separated by commas. These will be saved as individual records.</span>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="contact_email">Email</label>
+                        <label for="contact_email">Email <span class="req">*</span></label>
                         <input
                             type="email"
                             id="contact_email"

@@ -1,9 +1,8 @@
 <?php
 require '../config/database.php';
-
+require __DIR__ . '/auth-check.php';
 $active_page = 'add-book';
 
-// (Re)fill values after validation errors
 $old = $_SESSION['add-book-data'] ?? [];
 unset($_SESSION['add-book-data']);
 ?>
@@ -15,7 +14,6 @@ unset($_SESSION['add-book-data']);
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Add Book - EduLink Hub</title>
 
-    <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -34,7 +32,6 @@ unset($_SESSION['add-book-data']);
         <div class="content">
             <h1 class="page-title"><i class="fa-solid fa-book"></i> Add Book</h1>
 
-            <!-- Flash messages -->
             <?php if (!empty($_SESSION['add-book-error'])): ?>
                 <div class="alert alert-error">
                     <i class="fa-solid fa-triangle-exclamation"></i>
@@ -43,9 +40,7 @@ unset($_SESSION['add-book-data']);
                 <?php unset($_SESSION['add-book-error']); ?>
             <?php endif; ?>
 
-            <!-- Form -->
             <form class="book-form" action="logic/add-book-logic.php" method="post" enctype="multipart/form-data">
-                <!-- Row: Title & Author -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="title">Book Title</label>
@@ -70,7 +65,6 @@ unset($_SESSION['add-book-data']);
                     </div>
                 </div>
 
-                <!-- Row: Category -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="category">Category</label>
@@ -87,7 +81,6 @@ unset($_SESSION['add-book-data']);
                     </div>
                 </div>
 
-                <!-- Row: Image & PDF Link -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="image">Cover Image (optional)</label>
@@ -107,19 +100,16 @@ unset($_SESSION['add-book-data']);
                     </div>
                 </div>
 
-                <!-- Description -->
                 <div class="form-group">
                     <label for="description">Description</label>
                     <textarea id="description" name="description" placeholder="Short summary or key details about the book"><?= isset($old['description']) ? htmlspecialchars($old['description']) : '' ?></textarea>
                 </div>
 
-                <!-- Suggested For -->
                 <div class="form-group">
                     <label for="suggestedFor">Suggested For</label>
                     <textarea id="suggestedFor" name="suggestedFor" placeholder="Who is this book most useful for? (e.g., SSC candidates, beginners)"><?= isset($old['suggestedFor']) ? htmlspecialchars($old['suggestedFor']) : '' ?></textarea>
                 </div>
 
-                <!-- Row: Paid & Price -->
                 <div class="form-row">
                     <div class="form-group checkbox-group">
                         <?php $paid = isset($old['isPaid']) ? (int)$old['isPaid'] : 0; ?>

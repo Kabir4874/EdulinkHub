@@ -27,11 +27,9 @@ body {
   min-height: 100vh;
 }
 
-/* Main Content Styles */
 .main-content {
   flex: 1;
   margin-left: 250px;
-  /* keep in sync with sidebar width */
   min-height: 100vh;
 }
 
@@ -99,7 +97,6 @@ body {
   background: var(--warning-color);
 }
 
-/* Toolbar */
 .toolbar {
   display: grid;
   grid-template-columns: 1fr 200px 160px;
@@ -130,7 +127,6 @@ body {
   background: #fff;
 }
 
-/* Card & Table */
 .card {
   background: #fff;
   border-radius: 12px;
@@ -192,7 +188,6 @@ tbody tr:hover {
   white-space: nowrap;
 }
 
-/* Badges for type */
 .badge {
   display: inline-block;
   padding: 6px 10px;
@@ -215,7 +210,6 @@ tbody tr:hover {
   border-color: rgba(76, 201, 240, 0.35);
 }
 
-/* Footer / Pagination */
 .table-footer {
   display: flex;
   align-items: center;

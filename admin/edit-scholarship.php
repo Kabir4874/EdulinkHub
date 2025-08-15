@@ -1,6 +1,6 @@
 <?php
 require '../config/database.php';
-if (session_status() === PHP_SESSION_NONE) session_start();
+require __DIR__ . '/auth-check.php';
 
 $active_page = 'scholarship-list';
 
@@ -11,7 +11,6 @@ if ($id <= 0) {
     exit;
 }
 
-/* Fetch scholarship */
 $funding = null;
 if ($stmt = mysqli_prepare($conn, "SELECT id, type, title, description, link, eligibilityCriteria, applyDate, applicationDeadline, university, department, professor_id FROM fundings WHERE id = ?")) {
     mysqli_stmt_bind_param($stmt, 'i', $id);
@@ -26,14 +25,12 @@ if (!$funding) {
     exit;
 }
 
-/* Fetch professors for dropdown */
 $professors = [];
 $res = mysqli_query($conn, "SELECT id, name, contact_email FROM professors ORDER BY name ASC");
 if ($res) {
     while ($row = mysqli_fetch_assoc($res)) $professors[] = $row;
 }
 
-/* If we just had a validation error, repopulate values */
 $old = $_SESSION['edit-scholarship-data'] ?? [];
 unset($_SESSION['edit-scholarship-data']);
 
@@ -53,7 +50,6 @@ $showProf = ($ot === 'professor');
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Edit Scholarship - EduLink Hub</title>
 
-    <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -72,7 +68,6 @@ $showProf = ($ot === 'professor');
         <div class="content">
             <h1 class="page-title"><i class="fa-solid fa-pen-to-square"></i> Edit Scholarship</h1>
 
-            <!-- Flash messages -->
             <?php if (!empty($_SESSION['edit-scholarship-error'])): ?>
                 <div class="alert alert-error">
                     <i class="fa-solid fa-triangle-exclamation"></i>
@@ -84,7 +79,6 @@ $showProf = ($ot === 'professor');
             <form class="sch-form" action="logic/edit-scholarship-logic.php" method="post" novalidate>
                 <input type="hidden" name="id" value="<?= (int)$funding['id'] ?>">
 
-                <!-- Row: Title & Type -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="title">Scholarship Title</label>
@@ -107,7 +101,6 @@ $showProf = ($ot === 'professor');
                     </div>
                 </div>
 
-                <!-- Link -->
                 <div class="form-group">
                     <label for="link">Official Link</label>
                     <input
@@ -119,7 +112,6 @@ $showProf = ($ot === 'professor');
                         value="<?= htmlspecialchars($val('link')) ?>">
                 </div>
 
-                <!-- Dates -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="applyDate">Application Start Date</label>
@@ -132,19 +124,16 @@ $showProf = ($ot === 'professor');
                     </div>
                 </div>
 
-                <!-- Description -->
                 <div class="form-group">
                     <label for="description">Description</label>
                     <textarea id="description" name="description" placeholder="Brief description of the scholarship, benefits, duration, etc."><?= htmlspecialchars($val('description')) ?></textarea>
                 </div>
 
-                <!-- Eligibility -->
                 <div class="form-group">
                     <label for="eligibilityCriteria">Eligibility Criteria</label>
                     <textarea id="eligibilityCriteria" name="eligibilityCriteria" placeholder="Eligibility requirements (e.g., GPA, nationality, discipline)"><?= htmlspecialchars($val('eligibilityCriteria')) ?></textarea>
                 </div>
 
-                <!-- UNIVERSITY SECTION -->
                 <div id="universitySection" class="section" style="<?= $showUni ? '' : 'display:none;' ?>">
                     <div class="section-title"><i class="fa-solid fa-building-columns"></i> University Details</div>
                     <div class="form-row">
@@ -166,7 +155,6 @@ $showProf = ($ot === 'professor');
                     <div class="hint">This section is required for university-type scholarships.</div>
                 </div>
 
-                <!-- PROFESSOR SECTION -->
                 <div id="professorSection" class="section" style="<?= $showProf ? '' : 'display:none;' ?>">
                     <div class="section-title"><i class="fa-solid fa-user-tie"></i> Select Professor</div>
                     <div class="form-group">
@@ -195,7 +183,6 @@ $showProf = ($ot === 'professor');
     </main>
 
     <script>
-        // Toggle sections based on type
         (function() {
             const typeSel = document.getElementById('type');
             const uniSec = document.getElementById('universitySection');

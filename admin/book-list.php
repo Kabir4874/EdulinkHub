@@ -1,17 +1,12 @@
 <?php
-// admin/book-list.php
 require '../config/database.php';
-if (session_status() === PHP_SESSION_NONE) session_start();
+require __DIR__ . '/auth-check.php';
 
 $active_page = 'book-list';
 
-/** ------------------------------------------------------------------
- * Handle DELETE (POST)
- * -------------------------------------------------------------------*/
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete'], $_POST['id'])) {
     $id = (int)$_POST['id'];
 
-    // fetch image path for cleanup
     $img = '';
     if ($stmt = mysqli_prepare($conn, "SELECT image FROM books WHERE id = ?")) {
         mysqli_stmt_bind_param($stmt, 'i', $id);
@@ -21,11 +16,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete'], $_POST['id'
         mysqli_stmt_close($stmt);
     }
 
-    // delete row
     if ($stmt = mysqli_prepare($conn, "DELETE FROM books WHERE id = ?")) {
         mysqli_stmt_bind_param($stmt, 'i', $id);
         if (mysqli_stmt_execute($stmt)) {
-            // try to remove file
             if ($img) {
                 $abs = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . ltrim($img, '/\\');
                 if (is_file($abs)) {
@@ -41,18 +34,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete'], $_POST['id'
         $_SESSION['book-error'] = 'Delete failed (prepare error).';
     }
 
-    // redirect back (preserve filters)
     $qs = $_SERVER['QUERY_STRING'] ?? '';
     header('Location: book-list.php' . ($qs ? ('?' . $qs) : ''));
     exit;
 }
 
-/** ------------------------------------------------------------------
- * Read filters (GET) + pagination
- * -------------------------------------------------------------------*/
 $q        = isset($_GET['q']) ? trim((string)$_GET['q']) : '';
 $category = isset($_GET['category']) ? trim((string)$_GET['category']) : '';
-$paid     = isset($_GET['paid']) ? trim((string)$_GET['paid']) : ''; // '', 'paid', 'free'
+$paid     = isset($_GET['paid']) ? trim((string)$_GET['paid']) : '';
 $per_page = isset($_GET['per_page']) ? max(1, (int)$_GET['per_page']) : 10;
 $page     = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 
@@ -67,7 +56,6 @@ $where   = [];
 $params  = [];
 $types   = '';
 
-// search across title, author, category, description, suggestedFor(JSON text)
 if ($q !== '') {
     $where[] = "(title LIKE ? OR author LIKE ? OR category LIKE ? OR description LIKE ? OR suggestedFor LIKE ?)";
     $like = '%' . $q . '%';
@@ -89,9 +77,7 @@ if ($paid === 'paid') {
 
 $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
 
-/** ------------------------------------------------------------------
- * Count total
- * -------------------------------------------------------------------*/
+
 $total = 0;
 $sqlCount = "SELECT COUNT(*) FROM books $whereSql";
 if ($stmt = mysqli_prepare($conn, $sqlCount)) {
@@ -108,15 +94,12 @@ $total_pages = max(1, (int)ceil($total / $per_page));
 $page = min($page, $total_pages);
 $offset = ($page - 1) * $per_page;
 
-/** ------------------------------------------------------------------
- * Fetch page data
- * -------------------------------------------------------------------*/
 $books = [];
-$sql = "SELECT id, title, image, author, category, price, isPaid, pdfLink
+$sql = "SELECT id, title, image, author, category, price, isPaid, pdf
         FROM books
         $whereSql
         ORDER BY id DESC
-        LIMIT $per_page OFFSET $offset"; // ints are safe (casted above)
+        LIMIT $per_page OFFSET $offset";
 
 if ($stmt = mysqli_prepare($conn, $sql)) {
     if ($types !== '') {
@@ -126,7 +109,6 @@ if ($stmt = mysqli_prepare($conn, $sql)) {
     $res = mysqli_stmt_get_result($stmt);
     if ($res) {
         while ($row = mysqli_fetch_assoc($res)) {
-            // build helpers
             $img = trim((string)$row['image']);
             $row['_image_url'] = $img !== '' ? "../uploads/" . $img : '';
             $row['_paid_text'] = ((int)$row['isPaid'] === 1) ? 'Paid' : 'Free';
@@ -139,7 +121,6 @@ if ($stmt = mysqli_prepare($conn, $sql)) {
     $_SESSION['book-error'] = 'Failed to load books. (' . mysqli_error($conn) . ')';
 }
 
-/** helper to build links preserving filters */
 function link_with_params($overrides = [])
 {
     $params = [
@@ -162,7 +143,6 @@ function link_with_params($overrides = [])
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Book List - EduLink Hub</title>
 
-    <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -187,7 +167,6 @@ function link_with_params($overrides = [])
                 </div>
             </div>
 
-            <!-- Flash messages -->
             <?php if (!empty($_SESSION['book-success'])): ?>
                 <div class="alert alert-success">
                     <i class="fa-solid fa-circle-check"></i>
@@ -212,7 +191,6 @@ function link_with_params($overrides = [])
                 <?php unset($_SESSION['edit-book-success']); ?>
             <?php endif; ?>
 
-            <!-- Toolbar (GET submit) -->
             <form class="toolbar" method="get" action="book-list.php" style="display:grid; grid-template-columns:1fr 200px 160px 160px auto; gap:10px;">
                 <input class="input" type="search" name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Search by title, author, category, or keywords…" />
                 <select class="select" name="category">
@@ -269,8 +247,8 @@ function link_with_params($overrides = [])
                                         <td><?= is_null($b['price']) ? '-' : number_format((float)$b['price'], 2) ?></td>
                                         <td><span class="badge <?= $b['_paid_badge'] ?>"><?= $b['_paid_text'] ?></span></td>
                                         <td>
-                                            <?php if (!empty($b['pdfLink'])): ?>
-                                                <a class="link" href="<?= htmlspecialchars($b['pdfLink']) ?>" target="_blank" rel="noopener">Open PDF</a>
+                                            <?php if (!empty($b['pdf'])): ?>
+                                                <a class="link" href="<?= htmlspecialchars($b['pdf']) ?>" target="_blank" rel="noopener">Open PDF</a>
                                             <?php endif; ?>
                                         </td>
                                         <td>
@@ -297,7 +275,6 @@ function link_with_params($overrides = [])
                     </table>
                 </div>
 
-                <!-- Server-side pagination controls -->
                 <div class="table-footer">
                     <div class="rows-meta" id="rowsMeta">
                         <?php
@@ -310,7 +287,6 @@ function link_with_params($overrides = [])
                         <a class="page-btn <?= $page <= 1 ? 'disabled' : '' ?>" href="<?= $page <= 1 ? 'javascript:void(0)' : link_with_params(['page' => 1]) ?>" style="text-decoration: none;">First</a>
                         <a class="page-btn <?= $page <= 1 ? 'disabled' : '' ?>" href="<?= $page <= 1 ? 'javascript:void(0)' : link_with_params(['page' => $page - 1]) ?>" style="text-decoration: none;">Prev</a>
                         <?php
-                        // window of pages
                         $window = 5;
                         $start = max(1, $page - intdiv($window, 2));
                         $end = min($total_pages, $start + $window - 1);

@@ -6,17 +6,21 @@ if (!isset($_POST['submit'])) {
     exit;
 }
 
-$name                   = trim(filter_var($_POST['name'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-$researchInterestsInput = trim((string)($_POST['researchInterests'] ?? ''));
-$emailRaw               = trim((string)($_POST['contact_email'] ?? ''));
-$contact_phone          = trim(filter_var($_POST['contact_phone'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-$profileLinkRaw         = trim((string)($_POST['profileLink'] ?? ''));
-$availability           = isset($_POST['availability']) ? 'available' : 'not available';
-$image                  = $_FILES['image'] ?? null;
+$name             = trim(filter_var($_POST['name'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+$country          = trim(filter_var($_POST['country'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+$university_name  = trim(filter_var($_POST['university_name'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+$researchInput    = trim((string)($_POST['researchInterests'] ?? ''));
+$emailRaw         = trim((string)($_POST['contact_email'] ?? ''));
+$contact_phone    = trim(filter_var($_POST['contact_phone'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+$profileLinkRaw   = trim((string)($_POST['profileLink'] ?? ''));
+$availability     = isset($_POST['availability']) ? 'available' : 'not available';
+$image            = $_FILES['image'] ?? null;
 
 $_SESSION['add-professor-data'] = [
     'name'              => $name,
-    'researchInterests' => $researchInterestsInput,
+    'country'           => $country,
+    'university_name'   => $university_name,
+    'researchInterests' => $researchInput,
     'contact_email'     => $emailRaw,
     'contact_phone'     => $contact_phone,
     'profileLink'       => $profileLinkRaw,
@@ -31,43 +35,31 @@ if ($name === '') {
     $_SESSION['add-professor-error'] = 'Profile link must be a valid URL.';
 }
 
-$terms = [];
-
-if ($researchInterestsInput !== '' && preg_match('/^\s*\[.*\]\s*$/s', $researchInterestsInput)) {
-    $decoded = json_decode($researchInterestsInput, true);
-    if (is_array($decoded)) {
-        foreach ($decoded as $it) {
-            if (is_string($it)) {
-                $t = trim($it);
-                if ($t !== '') $terms[] = $t;
+$interests = [];
+if ($researchInput !== '') {
+    if (preg_match('/^\s*\[.*\]\s*$/s', $researchInput)) {
+        $decoded = json_decode($researchInput, true);
+        if (is_array($decoded)) {
+            foreach ($decoded as $it) {
+                if (is_string($it)) {
+                    $t = trim($it, " \t\n\r\0\x0B\"'");
+                    if ($t !== '') $interests[] = $t;
+                }
             }
+        } else {
+            $_SESSION['add-professor-error'] = 'Invalid JSON format for research interests.';
         }
     } else {
-        $_SESSION['add-professor-error'] = 'Invalid JSON format for research interests.';
-    }
-} else {
-    $parts = preg_split('/,/', $researchInterestsInput);
-    if (is_array($parts)) {
-        foreach ($parts as $p) {
-            $t = trim($p, " \t\n\r\0\x0B\"'");
-            if ($t !== '') $terms[] = $t;
+        $parts = preg_split('/,/', $researchInput);
+        if (is_array($parts)) {
+            foreach ($parts as $p) {
+                $t = trim($p, " \t\n\r\0\x0B\"'");
+                if ($t !== '') $interests[] = $t;
+            }
         }
     }
-}
-
-if (empty($_SESSION['add-professor-error'])) {
-    $terms = array_values(array_unique($terms, SORT_STRING));
-    if (count($terms) === 0) {
-        $_SESSION['add-professor-error'] = 'Please enter at least one research interest.';
-    }
-}
-
-$researchInterestsJson = '';
-if (empty($_SESSION['add-professor-error'])) {
-    $researchInterestsJson = json_encode($terms, JSON_UNESCAPED_UNICODE);
-    if ($researchInterestsJson === false) {
-        $_SESSION['add-professor-error'] = 'Failed to encode research interests.';
-    }
+    $interests = array_values(array_unique($interests, SORT_STRING));
+    if (count($interests) > 50) $interests = array_slice($interests, 0, 50);
 }
 
 $imageRelPath = '';
@@ -117,14 +109,12 @@ $email       = $emailRaw;
 $profileLink = $profileLinkRaw === '' ? '' : $profileLinkRaw;
 
 $sql = "INSERT INTO professors
-        (name, image, researchInterests, contact_email, contact_phone, availability, profileLink)
-        VALUES (?, ?, ?, ?, ?, ?, ?)";
+        (name, country, university_name, image, contact_email, contact_phone, availability, profileLink)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 $stmt = mysqli_prepare($conn, $sql);
 
 if (!$stmt) {
-    if ($imageAbsPath && file_exists($imageAbsPath)) {
-        @unlink($imageAbsPath);
-    }
+    if ($imageAbsPath && file_exists($imageAbsPath)) @unlink($imageAbsPath);
     $_SESSION['add-professor-error'] = 'Database error (prepare failed).';
     header('location: ' . ROOT_URL . 'admin/add-professor.php');
     exit;
@@ -132,10 +122,11 @@ if (!$stmt) {
 
 mysqli_stmt_bind_param(
     $stmt,
-    'sssssss',
+    'ssssssss',
     $name,
+    $country,
+    $university_name,
     $imageRelPath,
-    $researchInterestsJson,
     $email,
     $contact_phone,
     $availability,
@@ -144,19 +135,34 @@ mysqli_stmt_bind_param(
 
 $ok = mysqli_stmt_execute($stmt);
 if (!$ok) {
-    if ($imageAbsPath && file_exists($imageAbsPath)) {
-        @unlink($imageAbsPath);
-    }
+    if ($imageAbsPath && file_exists($imageAbsPath)) @unlink($imageAbsPath);
     $_SESSION['add-professor-error'] = 'Failed to add professor. (' . mysqli_error($conn) . ')';
     mysqli_stmt_close($stmt);
     header('location: ' . ROOT_URL . 'admin/add-professor.php');
     exit;
 }
-
+$professor_id = mysqli_insert_id($conn);
 mysqli_stmt_close($stmt);
 
-// success
+if ($professor_id && count($interests) > 0) {
+    $sqlI = "INSERT INTO professor_research_interests (professor_id, interest) VALUES (?, ?)";
+    if ($stmtI = mysqli_prepare($conn, $sqlI)) {
+        foreach ($interests as $interest) {
+            $interest = mb_substr($interest, 0, 255);
+            mysqli_stmt_bind_param($stmtI, 'is', $professor_id, $interest);
+            if (!mysqli_stmt_execute($stmtI)) {
+                $_SESSION['add-professor-error'] = 'Professor added, but one or more interests could not be saved.';
+            }
+        }
+        mysqli_stmt_close($stmtI);
+    } else {
+        $_SESSION['add-professor-error'] = 'Professor added, but interests insert failed (prepare error).';
+    }
+}
+
 unset($_SESSION['add-professor-data']);
-$_SESSION['add-professor-success'] = 'Professor added successfully.';
+if (empty($_SESSION['add-professor-error'])) {
+    $_SESSION['add-professor-success'] = 'Professor added successfully.';
+}
 header('location: ' . ROOT_URL . 'admin/professor-list.php');
 exit;

@@ -1,10 +1,9 @@
 <?php
 require '../config/database.php';
-if (session_status() === PHP_SESSION_NONE) session_start();
+require __DIR__ . '/auth-check.php';
 
 $active_page = 'reports';
 
-/* ----------------------------- Filters (GET) ----------------------------- */
 $from = isset($_GET['from']) ? trim($_GET['from']) : '';
 $to   = isset($_GET['to'])   ? trim($_GET['to'])   : '';
 $module = isset($_GET['module']) ? trim(strtolower($_GET['module'])) : '';
@@ -20,7 +19,6 @@ if (!$validDate($to))   $to   = '';
 $modulesAllowed = ['', 'books', 'professors', 'scholarships', 'universities'];
 if (!in_array($module, $modulesAllowed, true)) $module = '';
 
-/* ----------------------------- Helpers ----------------------------- */
 function fetch_one($conn, $sql, $types = '', $params = [])
 {
     $val = 0;
@@ -46,28 +44,24 @@ function fetch_rows($conn, $sql, $types = '', $params = [])
     return $rows;
 }
 
-/* ----------------------------- KPIs ----------------------------- */
-// Books
 $totalBooks = fetch_one($conn, "SELECT COUNT(*) FROM books");
 $paidBooks  = fetch_one($conn, "SELECT COUNT(*) FROM books WHERE isPaid=1");
 
-// Professors
 $totalProfessors = fetch_one($conn, "SELECT COUNT(*) FROM professors");
 
-// Scholarships (fundings)
 $totalScholarships = fetch_one($conn, "SELECT COUNT(*) FROM fundings");
 
-// Universities
 $totalUniversities = fetch_one($conn, "SELECT COUNT(*) FROM universities");
 
-// Upcoming deadlines in next 30 days (fundings.applicationDeadline + universities.applicationDeadline)
-$deadlinesNext30 = 0;
-$sqlDeadCount  = "SELECT COUNT(*) FROM fundings WHERE applicationDeadline IS NOT NULL AND applicationDeadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)";
-$sqlDeadCount2 = "SELECT COUNT(*) FROM universities WHERE applicationDeadline IS NOT NULL AND applicationDeadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)";
-$deadlinesNext30 = fetch_one($conn, $sqlDeadCount) + fetch_one($conn, $sqlDeadCount2);
+$deadlinesNext30 = fetch_one(
+    $conn,
+    "SELECT COUNT(*) FROM fundings WHERE applicationDeadline IS NOT NULL AND applicationDeadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)"
+) + fetch_one(
+    $conn,
+    "SELECT COUNT(*) FROM universities WHERE applicationDeadline IS NOT NULL AND applicationDeadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)"
+);
 
-/* ----------------------------- Charts Data ----------------------------- */
-// Books by category
+
 $bookCats = ['Admission' => 0, 'Job Exam' => 0, 'Skill-Based' => 0];
 $rows = fetch_rows($conn, "SELECT category, COUNT(*) AS c FROM books GROUP BY category");
 foreach ($rows as $r) {
@@ -75,20 +69,16 @@ foreach ($rows as $r) {
     if (isset($bookCats[$k])) $bookCats[$k] = (int)$r['c'];
 }
 
-// Scholarships by type
-$schTypes = ['university' => 0, 'professor' => 0];
+$schTypes = ['scholarship' => 0, 'professor' => 0];
 $rows = fetch_rows($conn, "SELECT LOWER(type) AS t, COUNT(*) AS c FROM fundings GROUP BY t");
 foreach ($rows as $r) {
     $t = $r['t'] ?? '';
     if (isset($schTypes[$t])) $schTypes[$t] = (int)$r['c'];
 }
 
-/* ----------------------------- Upcoming Deadlines Table ----------------------------- */
-/* Build date filter for deadlines (apply to both tables) */
 $deadlineWhere = [];
 $types = '';
 $params = [];
-
 if ($from !== '') {
     $deadlineWhere[] = 'd >= ?';
     $types .= 's';
@@ -99,14 +89,8 @@ if ($to   !== '') {
     $types .= 's';
     $params[] = $to;
 }
-
 $whereSql = $deadlineWhere ? ('WHERE ' . implode(' AND ', $deadlineWhere)) : '';
 
-/*
- * Unify deadlines:
- *  - Scholarships: label 'Scholarship', organization = university (or empty if professor), department = department, link = fundings.link
- *  - Universities: label 'Admission', organization = universities.name, department = universities.discipline, link = admissionLink
- */
 $sqlUnifiedDeadlines = "
     SELECT * FROM (
         SELECT
@@ -135,28 +119,19 @@ $sqlUnifiedDeadlines = "
 ";
 $deadlines = fetch_rows($conn, $sqlUnifiedDeadlines, $types, $params);
 
-/* Compute status for each deadline */
 function deadline_status($dateStr)
 {
     if (!$dateStr) return ['label' => '—', 'cls' => ''];
     $today = new DateTime('today');
     $d = DateTime::createFromFormat('Y-m-d', $dateStr);
     if (!$d) return ['label' => '—', 'cls' => ''];
-    $diff = (int)$today->diff($d)->format('%r%a'); // negative if past
+    $diff = (int)$today->diff($d)->format('%r%a');
     if ($diff < 0)  return ['label' => 'Past',     'cls' => 'past'];
     if ($diff <= 7) return ['label' => 'Due soon', 'cls' => 'warn'];
     return ['label' => 'Upcoming', 'cls' => 'ok'];
 }
 
-/* ----------------------------- Recent Activity ----------------------------- */
-/*
- * We'll UNION the latest entries from each table, using
- * last_ts = GREATEST(createdAt, updatedAt) when both exist.
- * Filter by module + date range.
- */
 $activity = [];
-
-// Build module filter & date filters per table
 $actFilters = [];
 $actTypes = '';
 $actParams = [];
@@ -174,8 +149,6 @@ if ($to   !== '') {
 $actWhere = $actFilters ? ('WHERE ' . implode(' AND ', $actFilters)) : '';
 
 $unionParts = [];
-
-// Books
 if ($module === '' || $module === 'books') {
     $unionParts[] = "
         SELECT last_ts, 'Book' AS module, action, title_or_name AS title, actor
@@ -190,7 +163,6 @@ if ($module === '' || $module === 'books') {
         $actWhere
     ";
 }
-// Professors
 if ($module === '' || $module === 'professors') {
     $unionParts[] = "
         SELECT last_ts, 'Professor' AS module, action, title_or_name AS title, actor
@@ -205,7 +177,6 @@ if ($module === '' || $module === 'professors') {
         $actWhere
     ";
 }
-// Scholarships (fundings)
 if ($module === '' || $module === 'scholarships') {
     $unionParts[] = "
         SELECT last_ts, 'Scholarship' AS module, action, title_or_name AS title, actor
@@ -220,7 +191,6 @@ if ($module === '' || $module === 'scholarships') {
         $actWhere
     ";
 }
-// Universities
 if ($module === '' || $module === 'universities') {
     $unionParts[] = "
         SELECT last_ts, 'University' AS module, action, title_or_name AS title, actor
@@ -235,20 +205,18 @@ if ($module === '' || $module === 'universities') {
         $actWhere
     ";
 }
-
 if ($unionParts) {
     $sqlActivity = implode(" UNION ALL ", $unionParts) . " ORDER BY last_ts DESC LIMIT 50";
     $activity = fetch_rows($conn, $sqlActivity, $actTypes, $actParams);
 }
 
-/* For charts, serialize data safely */
 $booksByCategory = [
     'labels' => array_keys($bookCats),
     'data'   => array_values($bookCats),
 ];
 $schByType = [
-    'labels' => ['University', 'Professor'],
-    'data'   => [$schTypes['university'], $schTypes['professor']],
+    'labels' => ['Scholarship', 'Professor'],
+    'data'   => [$schTypes['scholarship'], $schTypes['professor']],
 ];
 ?>
 <!DOCTYPE html>
@@ -259,7 +227,6 @@ $schByType = [
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Reports - EduLink Hub</title>
 
-    <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -287,7 +254,6 @@ $schByType = [
                 </div>
             </div>
 
-            <!-- Filters -->
             <form class="toolbar" method="get" action="reports.php" style="display:grid; grid-template-columns: 1fr 1fr 240px auto; gap:10px;">
                 <input type="date" class="input" id="fromDate" name="from" value="<?= htmlspecialchars($from) ?>" />
                 <input type="date" class="input" id="toDate" name="to" value="<?= htmlspecialchars($to) ?>" />
@@ -306,7 +272,6 @@ $schByType = [
                 </div>
             </form>
 
-            <!-- KPI Cards -->
             <div class="kpi-grid">
                 <div class="kpi accent-1">
                     <i class="fa-solid fa-book icon"></i>
@@ -346,7 +311,6 @@ $schByType = [
                 </div>
             </div>
 
-            <!-- Charts -->
             <div class="grid-2">
                 <div class="card">
                     <div class="card-head">
@@ -367,7 +331,6 @@ $schByType = [
                 </div>
             </div>
 
-            <!-- Upcoming Deadlines -->
             <div class="card">
                 <div class="card-head">
                     <div class="card-title">Upcoming Deadlines (Scholarships & Admissions)</div>
@@ -404,7 +367,7 @@ $schByType = [
                                         <td><span class="badge <?= $st['cls'] ?>"><?= htmlspecialchars($st['label']) ?></span></td>
                                         <td>
                                             <?php if (!empty($d['link'])): ?>
-                                                <a class="btn small secondary" href="<?= htmlspecialchars($d['link']) ?>" target="_blank" rel="noopener">Open</a>
+                                                <a class="btn small secondary" href="<?= htmlspecialchars($d['link']) ?>" target="_blank" rel="noopener" style="text-decoration: none;">Open</a>
                                             <?php endif; ?>
                                         </td>
                                     </tr>
@@ -415,7 +378,6 @@ $schByType = [
                 </div>
             </div>
 
-            <!-- Recent Activity -->
             <div class="card">
                 <div class="card-head">
                     <div class="card-title">Recent Activity</div>
@@ -458,16 +420,21 @@ $schByType = [
     </main>
 
     <script>
-        // Chart data from PHP
-        const booksByCategory = <?= json_encode($booksByCategory, JSON_UNESCAPED_UNICODE) ?>;
-        const scholarshipsByType = <?= json_encode($schByType, JSON_UNESCAPED_UNICODE) ?>;
+        const booksByCategory = <?= json_encode([
+                                    'labels' => array_keys($bookCats),
+                                    'data'   => array_values($bookCats),
+                                ], JSON_UNESCAPED_UNICODE) ?>;
+
+        const scholarshipsByType = <?= json_encode([
+                                        'labels' => $schByType['labels'],
+                                        'data'   => $schByType['data'],
+                                    ], JSON_UNESCAPED_UNICODE) ?>;
 
         const brand = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
         const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim();
         const warn = getComputedStyle(document.documentElement).getPropertyValue('--warning-color').trim();
         const ok = getComputedStyle(document.documentElement).getPropertyValue('--success-color').trim();
 
-        // Books by Category (bar)
         new Chart(document.getElementById('booksByCategory').getContext('2d'), {
             type: 'bar',
             data: {
@@ -493,7 +460,6 @@ $schByType = [
             }
         });
 
-        // Scholarships by Type (doughnut)
         new Chart(document.getElementById('scholarshipsByType').getContext('2d'), {
             type: 'doughnut',
             data: {

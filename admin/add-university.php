@@ -1,10 +1,9 @@
 <?php
 require '../config/database.php';
-if (session_status() === PHP_SESSION_NONE) session_start();
+require __DIR__ . '/auth-check.php';
 
 $active_page = 'add-university';
 
-// Values to (re)fill the form after an error
 $old = $_SESSION['add-university-data'] ?? [];
 unset($_SESSION['add-university-data']);
 ?>
@@ -16,7 +15,6 @@ unset($_SESSION['add-university-data']);
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Add University - EduLink Hub</title>
 
-    <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -35,7 +33,6 @@ unset($_SESSION['add-university-data']);
         <div class="content">
             <h1 class="page-title"><i class="fa-solid fa-building-columns"></i> Add University</h1>
 
-            <!-- Flash messages -->
             <?php if (!empty($_SESSION['add-university-error'])): ?>
                 <div class="alert alert-error">
                     <i class="fa-solid fa-triangle-exclamation"></i>
@@ -44,16 +41,7 @@ unset($_SESSION['add-university-data']);
                 <?php unset($_SESSION['add-university-error']); ?>
             <?php endif; ?>
 
-            <?php if (!empty($_SESSION['add-university-success'])): ?>
-                <div class="alert alert-success">
-                    <i class="fa-solid fa-circle-check"></i>
-                    <span><?= htmlspecialchars($_SESSION['add-university-success']) ?></span>
-                </div>
-                <?php unset($_SESSION['add-university-success']); ?>
-            <?php endif; ?>
-
             <form class="uni-form" action="logic/add-university-logic.php" method="post" enctype="multipart/form-data">
-                <!-- Row: Name & Location -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="name">University Name</label>
@@ -78,7 +66,6 @@ unset($_SESSION['add-university-data']);
                     </div>
                 </div>
 
-                <!-- Row: Program Type & Discipline -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="programType">Program Type</label>
@@ -103,7 +90,6 @@ unset($_SESSION['add-university-data']);
                     </div>
                 </div>
 
-                <!-- Admission Link -->
                 <div class="form-group">
                     <label for="admissionLink">Admission Link</label>
                     <input
@@ -115,7 +101,6 @@ unset($_SESSION['add-university-data']);
                         value="<?= isset($old['admissionLink']) ? htmlspecialchars($old['admissionLink']) : '' ?>">
                 </div>
 
-                <!-- Row: Application Dates -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="applicationDate">Application Start Date</label>
@@ -136,7 +121,6 @@ unset($_SESSION['add-university-data']);
                     </div>
                 </div>
 
-                <!-- Admit Card & Image -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="admitCardDownloadDate">Admit Card Download Date</label>
