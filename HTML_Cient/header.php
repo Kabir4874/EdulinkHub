@@ -874,7 +874,7 @@
       <div class="navbar-container">
         <!-- Logo with animation -->
         <div class="logo">
-          <a href="../index.php">
+          <a href="../index1.php">
             <img src="../images/image1.png" alt="EdUHub Logo" class="logo-img">
             <span class="logo-text pulse">EdUHub</span>
           </a>
@@ -890,7 +890,7 @@
         <!-- Main Navigation -->
         <ul class="nav-links">
           <li>
-            <a href="index.php" class="nav-link hover-underline">
+            <a href="index1.php" class="nav-link hover-underline">
               <i class="fas fa-home"></i>
               <span>Home</span>
             </a>
@@ -980,10 +980,10 @@
                 <span>Total:</span>
                 <span class="total-amount">৳<span id="cartTotal">0.00</span></span>
               </div>
-              <a href="payment.php" class="checkout-btn" id="checkoutBtn">
-                <i class="fas fa-credit-card"></i>
-                <span>Proceed to Payment</span>
-              </a>
+              <a href="product_cart.php" class="checkout-btn" id="checkoutBtn">
+  <i class="fas fa-credit-card"></i>
+  <span>Proceed to Checkout</span>
+</a>
             </div>
           </div>
 
@@ -994,8 +994,8 @@
               <div class="active-indicator"></div>
             </div>
             <div class="user-dropdown">
-              <a href="profile.php"><i class="fas fa-user-circle"></i> Profile</a>
-              <a href="settings.php"><i class="fas fa-cog"></i> Settings</a>
+              <a href="profile1.php"><i class="fas fa-user-circle"></i> Profile</a>
+              <a href="settings1.php"><i class="fas fa-cog"></i> Settings</a>
               <a href="login.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
           </div>
@@ -1063,6 +1063,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const cartTotal = document.getElementById("cartTotal");
   const cartDropdown = document.getElementById("cartDropdown");
   const cartIconContainer = document.getElementById("cartIconContainer");
+  const checkoutBtn = document.getElementById("checkoutBtn"); // Added checkout button reference
 
   // Update cart display function
   function updateCartDisplay() {
@@ -1092,7 +1093,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (cart.length === 0) {
       itemsHTML = '<div class="empty-cart"><i class="fas fa-box-open"></i><p>Your cart is empty</p></div>';
-    } 
+      if (checkoutBtn) checkoutBtn.style.display = 'none'; // Hide checkout button if cart is empty
+    } else {
+      if (checkoutBtn) checkoutBtn.style.display = 'flex'; // Show checkout button if cart has items
+    }
     
     cartItemsContainer.innerHTML = itemsHTML;
     cartCount.textContent = itemCount;
@@ -1128,6 +1132,8 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       updateCartDisplay();
       this.showNotification(`${bookName} added to cart!`);
+      cartIconContainer.classList.add('active'); // Open cart dropdown when adding items
+      cartDropdown.classList.add('show');
     },
     
     updateQuantity: function(bookName, action) {
@@ -1135,6 +1141,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (item) {
         if (action === 'increase') item.quantity++;
         else if (action === 'decrease' && item.quantity > 1) item.quantity--;
+        else if (action === 'decrease' && item.quantity === 1) this.removeFromCart(bookName);
         updateCartDisplay();
       }
     },
@@ -1142,13 +1149,14 @@ document.addEventListener('DOMContentLoaded', function() {
     removeFromCart: function(bookName) {
       cart = cart.filter(item => item.name !== bookName);
       updateCartDisplay();
+      this.showNotification(`${bookName} removed from cart`, 'warning');
     },
     
-    showNotification: function(message) {
+    showNotification: function(message, type = 'success') {
       const notification = document.createElement('div');
-      notification.className = 'cart-notification';
+      notification.className = `cart-notification ${type}`;
       notification.innerHTML = `
-        <i class="fas fa-check-circle"></i>
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
         <span>${message}</span>
       `;
       document.body.appendChild(notification);
@@ -1167,11 +1175,29 @@ document.addEventListener('DOMContentLoaded', function() {
   cartIconContainer.addEventListener('click', function(e) {
     e.stopPropagation();
     cartDropdown.classList.toggle('show');
+    this.classList.toggle('active');
   });
   
+  // Close when clicking outside
   document.addEventListener('click', function() {
     cartDropdown.classList.remove('show');
+    cartIconContainer.classList.remove('active');
   });
+  
+  // Prevent dropdown from closing when clicking inside
+  cartDropdown.addEventListener('click', function(e) {
+    e.stopPropagation();
+  });
+  
+  // Handle checkout button
+  if (checkoutBtn) {
+    checkoutBtn.addEventListener('click', function(e) {
+      if (cart.length === 0) {
+        e.preventDefault();
+        cartManager.showNotification('Your cart is empty! Add items to proceed.', 'warning');
+      }
+    });
+  }
   
   // Listen for storage events (updates from other tabs/pages)
   window.addEventListener('storage', function(e) {
@@ -1200,21 +1226,42 @@ document.head.insertAdjacentHTML('beforeend', `
       z-index: 1000;
       animation: slideIn 0.3s ease-out;
     }
+    
+    .cart-notification.warning {
+      background: #ff9800;
+    }
+    
     .cart-notification i {
       font-size: 18px;
     }
+    
     .fade-out {
       animation: fadeOut 0.3s ease-out forwards;
     }
+    
     @keyframes slideIn {
       from { transform: translateY(20px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
+    
     @keyframes fadeOut {
       to { opacity: 0; }
     }
+    
+    /* Ensure cart dropdown is visible when active */
+    .cart-dropdown.show {
+      display: block !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: translateY(0) !important;
+    }
+    
+    .cart-icon-container.active .cart-icon {
+      color: var(--accent-color);
+    }
   </style>
 `);
+</script>
 </script>
 
 </body>

@@ -36,75 +36,330 @@ if (isset($_SESSION['login_success']) && $_SESSION['login_success'] === true) {
   <link rel="stylesheet" href="style.css" />
   <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+ 
 </head>
-<body>
-  <header class="hero">
-    <nav class="navbar">
-      <div class="logo">
-  <img src="images/logo.png" alt="EdUHub Logo" class="logo-img">
-       </div>
-      <ul class="nav-links">
-        <li><a href="">Home</a></li>
-        <li class="dropdown">
-          <a href="">Books ▾</a>
-          <ul class="dropdown-content">
-  <li><a href="web-development.php">Web Development</a></li>
-  <li><a href="../HTML_Client/design-books.php">Design</a></li>
-  <li><a href="../HTML/ai-ml-books.html">AI & ML</a></li>
-  <li><a href="../HTML/admission-books.html">Admission (100+ Books)</a></li>
-  <li><a href="../HTML/public-private-job.html">Public & Private Job (100+ Books)</a></li>
-  <li><a href="../HTML/bcs-books.html">BCS (100+ Books)</a></li>
-  <li><a href="../HTML/it-software-books.html">IT & Software (100+ Books)</a></li>
-  <li><a href="../HTML/academic-books.html">Academic (100+ Books)</a></li>
-  <li><a href="../HTML/language-books.html">Language (100+ Books)</a></li>
-</ul>
 
-        </li>
-        <li class="dropdown">
-          <a href="#">Study Abroad ▾</a>
-          <ul class="dropdown-content">
-            <li><a href="../HTML/professors.html">Professors </a></li>
-            <li><a href="../HTML/scholarship.html">Scholarship</a></li>
-          </ul>
-        </li>
-        <a href="HTML/admission.html" class="btn">Admission </a>
-        <li><a href="../HTML/about-contact.html">About & Contact</a></li>
-      </ul>
-      <div class="auth-buttons">
-        <a href="../HTML/join.html" class="btn join">Join</a>
-         <a href="HTML/login.html">Login</a> | <a href="HTML/signup.html">Sign Up</a>
-      </div>
-    </nav>
+<body>
+
+ <?php require 'header.php'; ?>
+
+<section class="hero">
+
+    <?php
+    // Database connection
+    $conn = new mysqli("localhost", "kabir", "admin", "edulinkhub");
+    
+    // Check connection
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+    }
+    
+    // Function to get animated count from a table
+    function getAnimatedCount($conn, $table, $prefix = '', $suffix = '') {
+        $sql = "SELECT COUNT(*) as count FROM $table";
+        $result = $conn->query($sql);
+        if ($result && $result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            return '<span class="counter" data-target="'.$row['count'].'">0</span>';
+        }
+        return '<span class="counter">0</span>';
+    }
+    
+    // Get counts from different tables
+    $userCount = getAnimatedCount($conn, "users");
+    $professorCount = getAnimatedCount($conn, "professors");
+    $scholarshipCount = getAnimatedCount($conn, "fundings");
+    $bookCount = getAnimatedCount($conn, "books");
+    
+    // Close connection
+    $conn->close();
+    ?>
 
     <div class="hero-section" style="background-image: url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');">
-  <div class="hero-overlay"></div>
-  <div class="hero-content">
-    <h1>Unlock Your Academic Potential</h1>
-    <p>Get instant solutions to study problems, connect with expert tutors, and access affordable learning resources tailored for Bangladeshi students.</p>
-    <div class="hero-cta">
-      <a href="#" class="btn primary-btn" onclick="showLoginPrompt(event)">Get Study Help Now</a>
-      <a href="#" class="btn secondary-btn" onclick="showLoginPrompt(event)">Meet Our Tutors</a>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1 data-aos="fade-down" data-aos-duration="800">Unlock Your Academic Potential</h1>
+            <p data-aos="fade-down" data-aos-duration="800" data-aos-delay="200">Get instant solutions to study problems, connect with expert tutors, and access affordable learning resources tailored for Bangladeshi students.</p>
+            <div class="hero-cta" data-aos="fade-up" data-aos-duration="800" data-aos-delay="400">
+                <a href="#" class="btn primary-btn" onclick="showLoginPrompt(event)">Get Study Help Now</a>
+                <a href="#" class="btn secondary-btn" onclick="showLoginPrompt(event)">Meet Our Tutors</a>
+            </div>
+            <div class="hero-stats" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="600">
+                <div class="stat-item">
+                    <div class="stat-icon"><i class="fas fa-users"></i></div>
+                    <div class="stat-number"><?php echo $userCount; ?></div>
+                    <span class="stat-label">Registered Students</span>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+                    <div class="stat-number"><?php echo $professorCount; ?></div>
+                    <span class="stat-label">Expert Tutors</span>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon"><i class="fas fa-award"></i></div>
+                    <div class="stat-number"><?php echo $scholarshipCount; ?></div>
+                    <span class="stat-label">Scholarships</span>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon"><i class="fas fa-book"></i></div>
+                    <div class="stat-number"><?php echo $bookCount; ?></div>
+                    <span class="stat-label">Book Collection</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    </div>
-    <div class="hero-stats">
-      <div class="stat-item">
-        <span class="stat-number">50,000+</span>
-        <span class="stat-label">Problems Solved</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-number">500+</span>
-        <span class="stat-label">Expert Tutors</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-number">24/7</span>
-        <span class="stat-label">Support Available</span>
-      </div>
-    </div>
-  </div>
-</div>
-  </header>
+    <style>
+        
+        
+        .hero-section {
+            position: relative;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 90vh;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(67, 97, 238, 0.9) 0%, rgba(63, 55, 201, 0.9) 100%);
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            text-align: center;
+            color: white;
+        }
+        
+        .hero-content h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .hero-content p {
+            font-size: 1.25rem;
+            max-width: 800px;
+            margin: 0 auto 2rem;
+            opacity: 0.9;
+        }
+        
+        .hero-cta {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: var(--transition);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .primary-btn {
+            background-color: var(--accent-color);
+            color: var(--dark-color);
+        }
+        
+        .primary-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(76, 201, 240, 0.3);
+        }
+        
+        .secondary-btn {
+            background-color: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+        
+        .secondary-btn:hover {
+            background-color: white;
+            color: var(--primary-color);
+            transform: translateY(-3px);
+        }
+        
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            max-width: 1000px;
+            margin: 3rem auto 0;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 2rem 1rem;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: translateX(-100%);
+            transition: var(--transition);
+        }
+        
+        .stat-item:hover {
+            transform: translateY(-15px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .stat-item:hover::before {
+            transform: translateX(100%);
+        }
+        
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--accent-color);
+            transition: var(--transition);
+        }
+        
+        .stat-item:hover .stat-icon {
+            transform: scale(1.1);
+            color: white;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .stat-label {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.9);
+            display: block;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Counter animation */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .counter {
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .hero-content h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero-content p {
+                font-size: 1rem;
+            }
+            
+            .hero-cta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .hero-stats {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+
+    <!-- AOS Animation Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    
+    <script>
+        // Initialize AOS animation
+        AOS.init({
+            once: true,
+            easing: 'ease-out-quart'
+        });
+        
+        // Enhanced counter animation with slower speed
+        function animateCounters() {
+            const counters = document.querySelectorAll('.counter');
+            const duration = 3000; // 3 seconds
+            const startTime = Date.now();
+            
+            counters.forEach(counter => {
+                const target = +counter.getAttribute('data-target');
+                const start = 0;
+                const easeOutQuad = t => t * (2 - t); // Easing function
+                
+                const updateCounter = () => {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const easedProgress = easeOutQuad(progress);
+                    const current = Math.floor(easedProgress * target);
+                    
+                    counter.innerText = current.toLocaleString();
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(updateCounter);
+                    } else {
+                        counter.innerText = target.toLocaleString();
+                        // Final celebration animation
+                        counter.style.transform = 'scale(1.1)';
+                        setTimeout(() => {
+                            counter.style.transform = 'scale(1)';
+                        }, 300);
+                    }
+                };
+                
+                updateCounter();
+            });
+        }
+        
+        // Start animation when hero section is in view
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    animateCounters();
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, {threshold: 0.5});
+        
+        observer.observe(document.querySelector('.hero-stats'));
+    </script>
+</section>
   <section class="course-category">
   <div class="category-header">
     <p class="subtitle">START LEARNING TODAY</p>
@@ -347,52 +602,7 @@ if (isset($_SESSION['login_success']) && $_SESSION['login_success'] === true) {
 
  
 </body>
-<footer class="footer">
-  <div class="footer-container">
-    <div class="footer-col brand">
-      <img src="images/logo.png" alt="" class="flogo">
-      <p>The automated process starts as soon as your clothes go into the machine.</p>
-      <!---<div class="social-icons">
-        <a href="#"><i class="fab fa-twitter"></i></a>
-        <a href="#"><i class="fab fa-facebook-f"></i></a>
-        <a href="#"><i class="fab fa-pinterest-p"></i></a>
-      </div>--->
-    </div>
-
-    <div class="footer-col">
-      <h4>Our solutions</h4>
-      <ul>
-        <li><a href="#">Design & creatives</a></li>
-        <li><a href="#">Telecommunication</a></li>
-        <li><a href="#">Restaurant</a></li>
-        <li><a href="#">Programing</a></li>
-        <li><a href="#">Architecture</a></li>
-      </ul>
-    </div>
-
-    <div class="footer-col">
-      <h4>Support</h4>
-      <ul>
-        <li><a href="#">Design & creatives</a></li>
-        <li><a href="#">Telecommunication</a></li>
-        <li><a href="#">Restaurant</a></li>
-        <li><a href="#">Programing</a></li>
-        <li><a href="#">Architecture</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h4>Company</h4>
-      <ul>
-        <li><a href="#">Design & creatives</a></li>
-        <li><a href="#">Telecommunication</a></li>
-        <li><a href="#">Restaurant</a></li>
-        <li><a href="#">Programing</a></li>
-        <li><a href="#">Architecture</a></li>
-      </ul>
-    </div>
-  </div>
-</footer>
-
+<?php require 'footer.php'; ?>
 <!-- JavaScript -->
 
 <script>

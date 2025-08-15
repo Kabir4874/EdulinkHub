@@ -338,24 +338,29 @@
         }
 
         .coupon-form {
-            margin-top: 1.5rem;
-            display: flex;
-            gap: 0.5rem;
-        }
+    position: relative;
+    margin: 20px 0;
+}
 
-        .coupon-input {
-            flex: 1;
-            padding: 0.8rem 1rem;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
-        }
+.coupon-message {
+    font-size: 0.9rem;
+    margin-top: 8px;
+    padding: 5px;
+    border-radius: 4px;
+    display: none;
+}
 
-        .coupon-input:focus {
-            border-color: var(--primary-color);
-            outline: none;
-        }
+.coupon-message.success {
+    display: block;
+    background-color: #e6f7ee;
+    color: #00a65a;
+}
 
+.coupon-message.error {
+    display: block;
+    background-color: #fdecea;
+    color: #f44336;
+}
         .btn-apply {
             padding: 0 1.5rem;
             background: var(--dark-color);
@@ -524,7 +529,7 @@
         <header class="cart-header">
             <h1><i class="fas fa-shopping-cart"></i> Your Shopping Cart</h1>
             <div class="breadcrumb">
-                <span><a href="index.php">Home</a></span>
+                <span><a href="index1.php">Home</a></span>
                 <span>/</span>
                 <span>Shopping Cart</span>
             </div>
@@ -558,9 +563,10 @@
                 </div>
                 
                 <div class="coupon-form">
-                    <input type="text" class="coupon-input" placeholder="Coupon code">
-                    <button class="btn-apply">Apply</button>
-                </div>
+    <input type="text" class="coupon-input" id="couponCode" placeholder="Coupon code">
+    <button class="btn-apply" id="applyCouponBtn">Apply</button>
+    <div class="coupon-message" id="couponMessage"></div>
+</div>
                 
                 <button class="checkout-btn pulse" id="checkoutBtn">
                     <i class="fas fa-lock"></i> Proceed to Checkout
@@ -581,206 +587,633 @@
         </section>
     </div>
     
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-spinner"></div>
-        <p>Updating your cart...</p>
+    <!-- Enhanced Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-content">
+        <div class="book-loader">
+            <div class="book">
+                <div class="page"></div>
+                <div class="page"></div>
+                <div class="page"></div>
+                <div class="page"></div>
+            </div>
+        </div>
+        <div class="loading-text">
+            <p class="loading-message">Preparing your books</p>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+        </div>
     </div>
+</div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Get cart from localStorage
-            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+<style>
+    /* Loading Overlay Styles */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+    
+    .loading-overlay.active {
+        opacity: 1;
+        pointer-events: all;
+    }
+    
+    .loading-content {
+        text-align: center;
+        max-width: 300px;
+        padding: 30px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+        transform: translateY(20px);
+        animation: floatIn 0.5s ease-out forwards;
+    }
+    
+    /* Book Loading Animation */
+    .book-loader {
+        margin: 0 auto 25px;
+        perspective: 1000px;
+    }
+    
+    .book {
+        width: 80px;
+        height: 60px;
+        position: relative;
+        transform-style: preserve-3d;
+        animation: bookTilt 4s infinite ease-in-out;
+    }
+    
+    .page {
+        position: absolute;
+        width: 40px;
+        height: 60px;
+        background: #f5f7fa;
+        border-radius: 0 5px 5px 0;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transform-origin: left center;
+    }
+    
+    .page:nth-child(1) {
+        animation: pageFlip 4s infinite 4s ease-in-out;
+    }
+    
+    .page:nth-child(2) {
+        animation: pageFlip 4s infinite 5s ease-in-out;
+    }
+    
+    .page:nth-child(3) {
+        animation: pageFlip 4s infinite 6s ease-in-out;
+    }
+    
+    .page:nth-child(4) {
+        animation: pageFlip 4s infinite 5s ease-in-out;
+    }
+    
+    /* Loading Text */
+    .loading-text {
+        margin-top: 20px;
+    }
+    
+    .loading-message {
+        font-size: 1.1rem;
+        color: #032b56;
+        margin-bottom: 15px;
+        font-weight: 500;
+        animation: textPulse 2s infinite;
+    }
+    
+    /* Progress Bar */
+    .progress-bar {
+        height: 6px;
+        background: #e0e5ec;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        width: 0;
+        background: linear-gradient(90deg, #00d4aa, #0091ea);
+        border-radius: 3px;
+        animation: progressLoad 2.5s infinite ease-in-out;
+    }
+    
+    /* Animations */
+    @keyframes bookTilt {
+        0%, 100% { transform: rotateY(-10deg); }
+        50% { transform: rotateY(10deg); }
+    }
+    
+    @keyframes pageFlip {
+        0%, 30% { transform: rotateY(0); }
+        70%, 100% { transform: rotateY(-160deg); }
+    }
+    
+    @keyframes floatIn {
+        to { transform: translateY(0); }
+    }
+    
+    @keyframes textPulse {
+        0%, 100% { opacity: 0.8; }
+        50% { opacity: 1; }
+    }
+    
+    @keyframes progressLoad {
+        0% { width: 0; left: 0; }
+        50% { width: 100%; left: 0; }
+        100% { width: 0; left: 100%; }
+    }
+</style>
+
+<script>
+    // Example usage in your cart manager
+    window.cartManager = {
+        showLoading: function(message = '') {
+            const overlay = document.getElementById('loadingOverlay');
+            if (message) {
+                const messageEl = overlay.querySelector('.loading-message');
+                if (messageEl) messageEl.textContent = message;
+            }
+            overlay.classList.add('active');
+        },
+        
+        hideLoading: function() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+    };
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Get cart from localStorage
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+    
+    // DOM Elements
+    const elements = {
+        cartContainer: document.getElementById('cartItemsContainer'),
+        subtotal: document.getElementById('subtotal'),
+        discount: document.getElementById('discount'),
+        total: document.getElementById('total'),
+        checkoutBtn: document.getElementById('checkoutBtn'),
+        loadingOverlay: document.getElementById('loadingOverlay'),
+        recommendations: document.getElementById('recommendations'),
+        couponInput: document.querySelector('.coupon-input'),
+        applyCouponBtn: document.querySelector('.btn-apply'),
+        couponMessage: document.getElementById('couponMessage') || createCouponMessageElement()
+    };
+    
+    // Coupon codes database
+    const couponCodes = {
+        'WELCOME10': { type: 'percentage', value: 10, minPurchase: 0, name: '10% Welcome Discount' },
+        'FREESHIP': { type: 'fixed', value: 60, minPurchase: 500, name: 'Free Shipping' },
+        'BOOKLOVER': { type: 'percentage', value: 15, minPurchase: 1000, name: '15% Book Lover Discount' },
+        'READMORE': { type: 'fixed', value: 100, minPurchase: 800, name: '৳100 Off' }
+    };
+    
+    let appliedCoupon = null;
+
+    // Initialize
+    updateCartDisplay();
+    loadRecommendationsFromDatabase();
+    
+    // Create coupon message element if it doesn't exist
+    function createCouponMessageElement() {
+        const couponForm = document.querySelector('.coupon-form');
+        const messageEl = document.createElement('div');
+        messageEl.id = 'couponMessage';
+        messageEl.className = 'coupon-message';
+        couponForm.appendChild(messageEl);
+        return messageEl;
+    }
+
+    // Enhanced cart manager with coupon support
+    window.cartManager = {
+        addToCart: function(bookName, price, imageUrl = '') {
+            showLoading();
+            const existingItem = cart.find(item => item.name === bookName);
             
-            // DOM Elements
-            const cartItemsContainer = document.getElementById('cartItemsContainer');
-            const subtotalElement = document.getElementById('subtotal');
-            const discountElement = document.getElementById('discount');
-            const totalElement = document.getElementById('total');
-            const checkoutBtn = document.getElementById('checkoutBtn');
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            const recommendationsContainer = document.getElementById('recommendations');
+            if (existingItem) {
+                existingItem.quantity++;
+            } else {
+                cart.push({
+                    name: bookName,
+                    price: parseFloat(price),
+                    quantity: 1,
+                    image: imageUrl || 'https://via.placeholder.com/100x120?text=Book'
+                });
+            }
             
-            // Sample recommendation data
-            const recommendations = [
-                {
-                    id: 1,
-                    title: "Advanced JavaScript Programming",
-                    author: "Dr. Sarah Johnson",
-                    price: 850,
-                    originalPrice: 1000,
-                    image: "https://via.placeholder.com/200x300?text=Advanced+JS"
-                },
-                {
-                    id: 2,
-                    title: "Web Design Mastery",
-                    author: "Michael Chen",
-                    price: 750,
-                    originalPrice: 900,
-                    image: "https://via.placeholder.com/200x300?text=Web+Design"
-                },
-                {
-                    id: 3,
-                    title: "Database Systems",
-                    author: "Prof. David Wilson",
-                    price: 950,
-                    originalPrice: 1100,
-                    image: "https://via.placeholder.com/200x300?text=Database"
-                },
-                {
-                    id: 4,
-                    title: "Python for Beginners",
-                    author: "Emily Rodriguez",
-                    price: 650,
-                    originalPrice: 800,
-                    image: "https://via.placeholder.com/200x300?text=Python"
-                }
-            ];
-            
-            // Initialize cart display
+            this.clearCoupon();
             updateCartDisplay();
-            displayRecommendations();
+            this.showNotification(`${bookName} added to cart!`, 'success');
+        },
+        
+        updateQuantity: function(bookName, action) {
+            showLoading();
+            const item = cart.find(i => i.name === bookName);
+            if (!item) return;
             
-            // Update cart display function
-            function updateCartDisplay() {
-                let subtotal = 0;
+            if (action === 'increase') {
+                item.quantity++;
+            } else if (action === 'decrease' && item.quantity > 1) {
+                item.quantity--;
+            } else if (action === 'decrease' && item.quantity === 1) {
+                this.removeFromCart(bookName);
+                return;
+            }
+            
+            this.clearCoupon();
+            updateCartDisplay();
+            this.showNotification(`Quantity updated for ${bookName}`, 'info');
+        },
+        
+        removeFromCart: function(bookName) {
+            showLoading();
+            cart = cart.filter(item => item.name !== bookName);
+            this.clearCoupon();
+            updateCartDisplay();
+            this.showNotification(`${bookName} removed from cart`, 'warning');
+        },
+        
+        clearCoupon: function() {
+            if (appliedCoupon) {
+                appliedCoupon = null;
+                elements.couponInput.value = '';
+                elements.couponMessage.className = 'coupon-message';
+                elements.couponMessage.textContent = '';
+                updateCartDisplay();
+            }
+        },
+        
+        showNotification: function(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `cart-notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('fade-out');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    };
+    
+    // Event listeners
+    elements.checkoutBtn.addEventListener('click', function() {
+        if (cart.length > 0) {
+            // Save applied coupon to localStorage for use in checkout
+            if (appliedCoupon) {
+                localStorage.setItem('appliedCoupon', JSON.stringify(appliedCoupon));
+            }
+            window.location.href = 'product_payment.php';
+        } else {
+            cartManager.showNotification('Your cart is empty! Add items to proceed.', 'warning');
+        }
+    });
+    
+    elements.applyCouponBtn.addEventListener('click', applyCoupon);
+    elements.couponInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            applyCoupon();
+        }
+    });
+
+    // Helper functions
+    function escapeString(str) {
+        return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+    
+    function showLoading() {
+        elements.loadingOverlay.classList.add('active');
+        setTimeout(() => {
+            elements.loadingOverlay.classList.remove('active');
+        }, 500);
+    }
+    
+    function calculateSubtotal() {
+        return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    }
+    
+    function applyCoupon() {
+        const couponCode = elements.couponInput.value.trim().toUpperCase();
+        const subtotal = calculateSubtotal();
+        
+        // Reset message
+        elements.couponMessage.className = 'coupon-message';
+        elements.couponMessage.textContent = '';
+        
+        if (!couponCode) {
+            elements.couponMessage.className = 'coupon-message error';
+            elements.couponMessage.textContent = 'Please enter a coupon code';
+            return;
+        }
+        
+        if (appliedCoupon) {
+            elements.couponMessage.className = 'coupon-message error';
+            elements.couponMessage.textContent = 'A coupon is already applied';
+            return;
+        }
+        
+        if (!couponCodes[couponCode]) {
+            elements.couponMessage.className = 'coupon-message error';
+            elements.couponMessage.textContent = 'Invalid coupon code';
+            return;
+        }
+        
+        const coupon = couponCodes[couponCode];
+        
+        if (subtotal < coupon.minPurchase) {
+            elements.couponMessage.className = 'coupon-message error';
+            elements.couponMessage.textContent = `Minimum purchase of ৳${coupon.minPurchase} required for this coupon`;
+            return;
+        }
+        
+        // Apply the coupon
+        appliedCoupon = {
+            code: couponCode,
+            ...coupon
+        };
+        
+        elements.couponMessage.className = 'coupon-message success';
+        elements.couponMessage.innerHTML = `
+            <i class="fas fa-check-circle"></i> 
+            <strong>${coupon.name}</strong> applied successfully!
+            <button class="btn-remove-coupon" onclick="cartManager.clearCoupon()">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        
+        updateCartDisplay();
+    }
+    
+    function updateCartDisplay() {
+        showLoading();
+        let subtotal = calculateSubtotal();
+        let shipping = 60;
+        let discount = 0;
+        
+        // Apply coupon discount if available
+        if (appliedCoupon) {
+            if (appliedCoupon.type === 'percentage') {
+                discount = subtotal * (appliedCoupon.value / 100);
+            } else if (appliedCoupon.type === 'fixed') {
+                discount = Math.min(appliedCoupon.value, subtotal);
+            }
+            
+            // Special case for free shipping coupon
+            if (appliedCoupon.code === 'FREESHIP') {
+                shipping = 0;
+            }
+        }
+        
+        let total = subtotal + shipping - discount;
+        
+        // Update totals display
+        elements.subtotal.textContent = `৳${subtotal.toFixed(2)}`;
+        elements.discount.textContent = `-৳${discount.toFixed(2)}`;
+        elements.total.textContent = `৳${total.toFixed(2)}`;
+        
+        // Update cart items
+        let html = '';
+        if (cart.length === 0) {
+            html = `
+                <div class="empty-cart">
+                    <i class="fas fa-shopping-cart"></i>
+                    <h3>Your cart is empty</h3>
+                    <p>Looks like you haven't added any items to your cart yet.</p>
+                    <a href="products.php" class="btn-primary">
+                        <i class="fas fa-book-open"></i> Browse Books
+                    </a>
+                </div>
+            `;
+            elements.checkoutBtn.style.display = 'none';
+        } else {
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                html += `
+                    <div class="cart-item" data-id="${escapeString(item.name)}">
+                        <img src="${item.image}" alt="${item.name}" class="cart-item-img">
+                        <div class="cart-item-details">
+                            <div>
+                                <h3 class="cart-item-title">${item.name}</h3>
+                                <p class="cart-item-price">৳${item.price.toFixed(2)} each</p>
+                            </div>
+                            <div class="cart-item-actions">
+                                <button class="action-btn" onclick="cartManager.removeFromCart('${escapeString(item.name)}')">
+                                    <i class="fas fa-trash"></i> Remove
+                                </button>
+                                <button class="action-btn" onclick="cartManager.saveForLater('${escapeString(item.name)}')">
+                                    <i class="fas fa-heart"></i> Save for later
+                                </button>
+                            </div>
+                        </div>
+                        <div class="quantity-section">
+                            <div class="quantity-controls">
+                                <button class="quantity-btn" onclick="cartManager.updateQuantity('${escapeString(item.name)}', 'decrease')">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <span class="quantity-value">${item.quantity}</span>
+                                <button class="quantity-btn" onclick="cartManager.updateQuantity('${escapeString(item.name)}', 'increase')">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <div class="item-total">৳${itemTotal.toFixed(2)}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            elements.checkoutBtn.style.display = 'flex';
+        }
+        
+        elements.cartContainer.innerHTML = html;
+        
+        // Update cart count in header if exists
+        const cartCount = document.getElementById('cartCount');
+        if (cartCount) {
+            cartCount.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
+        }
+        
+        // Save to localStorage
+        localStorage.setItem('cart', JSON.stringify(cart));
+    }
+    
+    // Function to load recommendations from database
+    function loadRecommendationsFromDatabase() {
+        showLoading();
+        
+        // AJAX call to fetch recommendations from server
+        fetch('get_recommendations.php')
+            .then(response => response.json())
+            .then(books => {
                 let html = '';
                 
-                if (cart.length === 0) {
-                    html = `
-                        <div class="empty-cart">
-                            <i class="fas fa-shopping-cart"></i>
-                            <h3>Your cart is empty</h3>
-                            <p>Looks like you haven't added any items to your cart yet.</p>
-                            <a href="products.php" class="btn-primary">
-                                <i class="fas fa-book-open"></i> Browse Books
-                            </a>
-                        </div>
-                    `;
+                if (books.length > 0) {
+                    // Create scrollable container
+                    html = '<div class="recommendations-scroll">';
                     
-                    checkoutBtn.style.display = 'none';
-                } else {
-                    cart.forEach(item => {
-                        const itemTotal = item.price * item.quantity;
-                        subtotal += itemTotal;
+                    books.forEach(book => {
+                        const discountPercent = book.originalPrice ? 
+                            Math.round(((book.originalPrice - book.price) / book.originalPrice) * 100) : 0;
                         
                         html += `
-                            <div class="cart-item" data-id="${item.name}">
-                                <img src="https://via.placeholder.com/100x120?text=Book" alt="${item.name}" class="cart-item-img">
-                                <div class="cart-item-details">
-                                    <div>
-                                        <h3 class="cart-item-title">${item.name}</h3>
-                                        <p class="cart-item-author">By Author Name</p>
-                                    </div>
-                                    <div class="cart-item-actions">
-                                        <button class="action-btn" onclick="cartManager.removeFromCart('${escapeString(item.name)}')">
-                                            <i class="fas fa-trash"></i> Remove
-                                        </button>
-                                        <button class="action-btn">
-                                            <i class="fas fa-heart"></i> Save for later
-                                        </button>
-                                    </div>
+                            <div class="recommendation-item">
+                                <img src="${book.image || 'https://via.placeholder.com/200x300?text=Book'}" 
+                                     alt="${book.title}" class="recommendation-img">
+                                <h3>${book.title}</h3>
+                                <p>by ${book.author || 'Unknown Author'}</p>
+                                <div class="price">
+                                    <span class="current-price">৳${book.price.toFixed(2)}</span>
+                                    ${book.originalPrice ? `
+                                        <span class="original-price">৳${book.originalPrice.toFixed(2)}</span>
+                                        <span class="discount-badge">${discountPercent}% OFF</span>
+                                    ` : ''}
                                 </div>
-                                <div class="cart-item-price">
-                                    <div class="price-amount">৳${itemTotal.toFixed(2)}</div>
-                                    <div class="quantity-controls">
-                                        <button class="quantity-btn" onclick="cartManager.updateQuantity('${escapeString(item.name)}', 'decrease')">
-                                            <i class="fas fa-minus"></i>
-                                        </button>
-                                        <span class="quantity-value">${item.quantity}</span>
-                                        <button class="quantity-btn" onclick="cartManager.updateQuantity('${escapeString(item.name)}', 'increase')">
-                                            <i class="fas fa-plus"></i>
-                                        </button>
-                                    </div>
-                                </div>
+                                <button class="btn-primary" 
+                                        onclick="cartManager.addToCart('${escapeString(book.title)}', 
+                                        ${book.price}, 
+                                        '${book.image || ''}')">
+                                    <i class="fas fa-cart-plus"></i> Add to Cart
+                                </button>
                             </div>
                         `;
                     });
                     
-                    checkoutBtn.style.display = 'flex';
+                    html += '</div>'; // Close scrollable container
+                } else {
+                    html = '<p>No recommendations available at the moment.</p>';
                 }
                 
-                cartItemsContainer.innerHTML = html;
-                
-                // Calculate totals
-                const shipping = 60;
-                const discount = 0; // Would be calculated from coupons
-                const total = subtotal + shipping - discount;
-                
-                subtotalElement.textContent = `৳${subtotal.toFixed(2)}`;
-                discountElement.textContent = `-৳${discount.toFixed(2)}`;
-                totalElement.textContent = `৳${total.toFixed(2)}`;
-                
-                // Update cart count in header
-                const cartCount = document.getElementById('cartCount');
-                if (cartCount) {
-                    cartCount.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
-                }
-            }
-            
-            // Display recommendations
-            function displayRecommendations() {
-                let html = '';
-                
-                recommendations.forEach(book => {
-                    const discountPercent = Math.round(((book.originalPrice - book.price) / book.originalPrice) * 100);
-                    
-                    html += `
-                        <div class="recommendation-item">
-                            <img src="${book.image}" alt="${book.title}" class="recommendation-img">
-                            <h3>${book.title}</h3>
-                            <p>by ${book.author}</p>
-                            <div class="price">
-                                <span class="current-price">৳${book.price.toFixed(2)}</span>
-                                <span class="original-price">৳${book.originalPrice.toFixed(2)}</span>
-                                <span class="discount-badge">${discountPercent}% OFF</span>
-                            </div>
-                            <button class="btn-primary" onclick="cartManager.addToCart('${escapeString(book.title)}', ${book.price})">
-                                <i class="fas fa-cart-plus"></i> Add to Cart
-                            </button>
-                        </div>
-                    `;
-                });
-                
-                recommendationsContainer.innerHTML = html;
-            }
-            
-            // Helper function to escape strings for HTML
-            function escapeString(str) {
-                return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-            }
-            
-            // Checkout button click handler
-            checkoutBtn.addEventListener('click', function() {
-                if (cart.length > 0) {
-                    window.location.href = 'payment.php';
-                }
+                elements.recommendations.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error loading recommendations:', error);
+                elements.recommendations.innerHTML = '<p>Could not load recommendations. Please try again later.</p>';
+            })
+            .finally(() => {
+                elements.loadingOverlay.classList.remove('active');
             });
+    }
+    
+    // Add dynamic styles
+    document.head.insertAdjacentHTML('beforeend', `
+        <style>
+            .coupon-message {
+                font-size: 0.9rem;
+                margin-top: 8px;
+                padding: 8px 12px;
+                border-radius: 4px;
+                display: none;
+                width: 100%;
+                position: relative;
+            }
             
-            // Quantity button handlers (using event delegation)
-            document.addEventListener('click', function(e) {
-                if (e.target.classList.contains('quantity-btn')) {
-                    const itemElement = e.target.closest('.cart-item');
-                    if (itemElement) {
-                        itemElement.classList.add('pulse');
-                        setTimeout(() => {
-                            itemElement.classList.remove('pulse');
-                        }, 1500);
-                    }
-                }
-            });
+            .coupon-message.success {
+                display: block;
+                background-color: #e6f7ee;
+                color: #00a65a;
+            }
             
-            // Expose update function to cartManager
-            window.cartManager.updateCartDisplay = updateCartDisplay;
+            .coupon-message.error {
+                display: block;
+                background-color: #fdecea;
+                color: #f44336;
+            }
             
-            // Show loading when cart is being updated
-            window.cartManager.showLoading = function() {
-                loadingOverlay.classList.add('active');
-                setTimeout(() => {
-                    loadingOverlay.classList.remove('active');
-                }, 800);
-            };
-        });
-    </script>
+            .btn-remove-coupon {
+                background: none;
+                border: none;
+                color: inherit;
+                position: absolute;
+                right: 8px;
+                cursor: pointer;
+                padding: 0 4px;
+            }
+            
+            .coupon-form {
+                position: relative;
+                margin: 20px 0;
+            }
+            
+            .coupon-input {
+                flex: 1;
+                min-width: 150px;
+                padding: 10px 15px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 0.9rem;
+            }
+            
+            .btn-apply {
+                background-color: #032b56;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 0.9rem;
+                transition: background-color 0.3s;
+            }
+            
+            .btn-apply:hover {
+                background-color: #021d3a;
+            }
+            
+            .recommendations-scroll {
+                display: flex;
+                overflow-x: auto;
+                gap: 1.5rem;
+                padding-bottom: 1rem;
+                scrollbar-width: thin;
+                scrollbar-color: var(--primary-color) #f1f1f1;
+            }
+            
+            .recommendations-scroll::-webkit-scrollbar {
+                height: 8px;
+            }
+            
+            .recommendations-scroll::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 10px;
+            }
+            
+            .recommendations-scroll::-webkit-scrollbar-thumb {
+                background-color: var(--primary-color);
+                border-radius: 10px;
+            }
+            
+            .recommendation-item {
+                flex: 0 0 auto;
+                width: 200px;
+            }
+            
+            .quantity-section {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 0.5rem;
+            }
+            
+            .item-total {
+                font-weight: bold;
+                color: var(--dark-color);
+            }
+        </style>
+    `);
+});
+</script>
 </body>
 </html>

@@ -195,7 +195,7 @@ document.getElementById('country').addEventListener('change', function() {
 <section class="container_professor" id="professorsList">
     <?php if ($result && $result->num_rows > 0): ?>
         <?php while ($prof = $result->fetch_assoc()): 
-            $interests = json_decode($prof['researchInterests'], true) ?: [];
+            $interests = json_decode($prof['research_interests'], true) ?: [];
             ?>
             <div class="university-card">
     <img src="<?= htmlspecialchars($prof['image']) ?>" 
