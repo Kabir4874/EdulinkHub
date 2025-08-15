@@ -1,3 +1,30 @@
+<?php
+session_start();
+if (isset($_SESSION['login_success']) && $_SESSION['login_success'] === true) {
+    echo "
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        Swal.fire({
+          title: 'Login Successful!',
+          text: 'Welcome back, " . $_SESSION['full_name'] . " 🎉',
+          icon: 'success',
+          confirmButtonText: 'Continue',
+          showClass: {
+            popup: 'animate__animated animate__fadeInDown'
+          },
+          hideClass: {
+            popup: 'animate__animated animate__fadeOutUp'
+          }
+        });
+      });
+    </script>
+    ";
+    unset($_SESSION['login_success']); // Remove so it only shows once
+}
+?>
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,6 +36,7 @@
   <link rel="stylesheet" href="style.css" />
   <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </head>
 <body>
@@ -22,8 +50,8 @@
         <li class="dropdown">
           <a href="">Books ▾</a>
           <ul class="dropdown-content">
-  <li><a href="../HTML/web-development.html">Web Development</a></li>
-  <li><a href="../HTML/design-books.html">Design</a></li>
+  <li><a href="web-development.php">Web Development</a></li>
+  <li><a href="../HTML_Client/design-books.php">Design</a></li>
   <li><a href="../HTML/ai-ml-books.html">AI & ML</a></li>
   <li><a href="../HTML/admission-books.html">Admission (100+ Books)</a></li>
   <li><a href="../HTML/public-private-job.html">Public & Private Job (100+ Books)</a></li>
