@@ -1,16 +1,12 @@
 <?php
-// admin/professor-list.php
 require '../config/database.php';
+require __DIR__ . '/auth-check.php';
 
 $active_page = 'professors';
 
-/** ------------------------------------------------------------------
- * Handle DELETE (POST)
- * -------------------------------------------------------------------*/
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete'], $_POST['id'])) {
     $id = (int)$_POST['id'];
 
-    // fetch image path for cleanup
     $img = '';
     if ($stmt = mysqli_prepare($conn, "SELECT image FROM professors WHERE id = ?")) {
         mysqli_stmt_bind_param($stmt, 'i', $id);
@@ -20,13 +16,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete'], $_POST['id'
         mysqli_stmt_close($stmt);
     }
 
-    // delete row
+    if ($stmt = mysqli_prepare($conn, "DELETE FROM professor_research_interests WHERE professor_id = ?")) {
+        mysqli_stmt_bind_param($stmt, 'i', $id);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+    }
+
     if ($stmt = mysqli_prepare($conn, "DELETE FROM professors WHERE id = ?")) {
         mysqli_stmt_bind_param($stmt, 'i', $id);
         if (mysqli_stmt_execute($stmt)) {
-            // try to remove file
             if ($img) {
-                $abs = dirname(__DIR__) . DIRECTORY_SEPARATOR . ltrim($img, '/\\');
+                $abs = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . ltrim($img, '/\\');
                 if (is_file($abs)) {
                     @unlink($abs);
                 }
@@ -40,15 +40,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete'], $_POST['id'
         $_SESSION['professor-error'] = 'Delete failed (prepare error).';
     }
 
-    // redirect back (preserve filters)
     $qs = $_SERVER['QUERY_STRING'] ?? '';
     header('Location: professor-list.php' . ($qs ? ('?' . $qs) : ''));
     exit;
 }
 
-/** ------------------------------------------------------------------
- * Read filters (GET) + pagination
- * -------------------------------------------------------------------*/
 $q            = isset($_GET['q']) ? trim((string)$_GET['q']) : '';
 $availability = isset($_GET['availability']) ? trim((string)$_GET['availability']) : '';
 $per_page     = isset($_GET['per_page']) ? max(1, (int)$_GET['per_page']) : 10;
@@ -61,28 +57,30 @@ if (!in_array($availability, ['', 'available', 'not available'], true)) {
 $where   = [];
 $params  = [];
 $types   = '';
+$joinForSearch = false;
 
-// search across name, email, phone, researchInterests (JSON text)
 if ($q !== '') {
-    $where[] = "(name LIKE ? OR contact_email LIKE ? OR contact_phone LIKE ? OR researchInterests LIKE ?)";
+    $where[] = "(p.name LIKE ? OR p.contact_email LIKE ? OR p.contact_phone LIKE ? OR p.country LIKE ? OR p.university_name LIKE ? OR pri.interest LIKE ?)";
     $like = '%' . $q . '%';
-    array_push($params, $like, $like, $like, $like);
-    $types .= 'ssss';
+    array_push($params, $like, $like, $like, $like, $like, $like);
+    $types .= 'ssssss';
+    $joinForSearch = true;
 }
 
 if ($availability !== '') {
-    $where[] = "availability = ?";
+    $where[] = "p.availability = ?";
     $params[] = $availability;
     $types   .= 's';
 }
 
 $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
 
-/** ------------------------------------------------------------------
- * Count total
- * -------------------------------------------------------------------*/
 $total = 0;
-$sqlCount = "SELECT COUNT(*) FROM professors $whereSql";
+$sqlCount = "SELECT COUNT(DISTINCT p.id)
+             FROM professors p
+             " . ($joinForSearch ? "LEFT JOIN professor_research_interests pri ON pri.professor_id = p.id" : "") . "
+             $whereSql";
+
 if ($stmt = mysqli_prepare($conn, $sqlCount)) {
     if ($types !== '') {
         mysqli_stmt_bind_param($stmt, $types, ...$params);
@@ -97,15 +95,24 @@ $total_pages = max(1, (int)ceil($total / $per_page));
 $page = min($page, $total_pages);
 $offset = ($page - 1) * $per_page;
 
-/** ------------------------------------------------------------------
- * Fetch page data
- * -------------------------------------------------------------------*/
 $professors = [];
-$sql = "SELECT id, name, image, researchInterests, contact_email, contact_phone, availability, profileLink
-        FROM professors
+$sql = "SELECT
+            p.id,
+            p.name,
+            p.country,
+            p.university_name,
+            p.image,
+            p.contact_email,
+            p.contact_phone,
+            p.availability,
+            p.profileLink,
+            GROUP_CONCAT(DISTINCT pri.interest ORDER BY pri.interest SEPARATOR ', ') AS interests_str
+        FROM professors p
+        LEFT JOIN professor_research_interests pri ON pri.professor_id = p.id
         $whereSql
-        ORDER BY id DESC
-        LIMIT $per_page OFFSET $offset"; // ints are safe (casted above)
+        GROUP BY p.id
+        ORDER BY p.id DESC
+        LIMIT $per_page OFFSET $offset";
 
 if ($stmt = mysqli_prepare($conn, $sql)) {
     if ($types !== '') {
@@ -115,27 +122,9 @@ if ($stmt = mysqli_prepare($conn, $sql)) {
     $res = mysqli_stmt_get_result($stmt);
     if ($res) {
         while ($row = mysqli_fetch_assoc($res)) {
-            // researchInterests pretty print (JSON array or plain)
-            $ri = $row['researchInterests'];
-            $prettyRI = '';
-            if ($ri !== null && $ri !== '') {
-                $decoded = json_decode($ri, true);
-                if (is_array($decoded)) {
-                    $clean = array_values(array_filter(array_map(function ($s) {
-                        return is_string($s) ? trim($s) : '';
-                    }, $decoded), fn($v) => $v !== ''));
-                    $prettyRI = implode(', ', $clean);
-                } else {
-                    $prettyRI = $ri;
-                }
-            }
-            $row['_pretty_researchInterests'] = $prettyRI;
-
             $row['_availability'] = (strtolower(trim((string)$row['availability'])) === 'available') ? 'available' : 'not available';
-
             $img = trim((string)$row['image']);
             $row['_image_url'] = $img;
-
             $professors[] = $row;
         }
     }
@@ -144,7 +133,6 @@ if ($stmt = mysqli_prepare($conn, $sql)) {
     $_SESSION['professor-error'] = 'Failed to load professors. (' . mysqli_error($conn) . ')';
 }
 
-/** helper to build links preserving filters */
 function link_with_params($overrides = [])
 {
     $params = [
@@ -166,7 +154,6 @@ function link_with_params($overrides = [])
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Professor List - EduLink Hub</title>
 
-    <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -191,7 +178,6 @@ function link_with_params($overrides = [])
                 </div>
             </div>
 
-            <!-- Flash messages -->
             <?php if (!empty($_SESSION['professor-success'])): ?>
                 <div class="alert alert-success">
                     <i class="fa-solid fa-circle-check"></i>
@@ -208,9 +194,8 @@ function link_with_params($overrides = [])
                 <?php unset($_SESSION['professor-error']); ?>
             <?php endif; ?>
 
-            <!-- Toolbar (GET submit) -->
             <form class="toolbar" method="get" action="professor-list.php" style="display:grid; grid-template-columns:1fr 200px 160px auto; gap:10px;">
-                <input class="input" type="search" name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Search by name, email, phone, or interests…" />
+                <input class="input" type="search" name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Search by name, email, phone, country, university or interests…" />
                 <select class="select" name="availability">
                     <option value="" <?= $availability === '' ? 'selected' : ''; ?>>All Availability</option>
                     <option value="available" <?= $availability === 'available' ? 'selected' : ''; ?>>Available</option>
@@ -235,6 +220,8 @@ function link_with_params($overrides = [])
                                 <th style="width:72px;">ID</th>
                                 <th style="width:72px;">Image</th>
                                 <th>Name</th>
+                                <th style="width:140px;">Country</th>
+                                <th>University</th>
                                 <th>Research Interests</th>
                                 <th>Email</th>
                                 <th>Phone</th>
@@ -254,7 +241,9 @@ function link_with_params($overrides = [])
                                             <?php endif; ?>
                                         </td>
                                         <td><?= htmlspecialchars($prof['name'] ?? '') ?></td>
-                                        <td><?= htmlspecialchars($prof['_pretty_researchInterests'] ?? '') ?></td>
+                                        <td><?= htmlspecialchars($prof['country'] ?? '') ?></td>
+                                        <td><?= htmlspecialchars($prof['university_name'] ?? '') ?></td>
+                                        <td><?= htmlspecialchars($prof['interests_str'] ?? '') ?></td>
                                         <td><?= htmlspecialchars($prof['contact_email'] ?? '') ?></td>
                                         <td><?= htmlspecialchars($prof['contact_phone'] ?? '') ?></td>
                                         <td>
@@ -283,7 +272,7 @@ function link_with_params($overrides = [])
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr class="empty-row">
-                                    <td colspan="9" style="text-align:center; color:#64748b; padding:24px;">
+                                    <td colspan="11" style="text-align:center; color:#64748b; padding:24px;">
                                         No professors found for the selected filters.
                                     </td>
                                 </tr>
@@ -292,13 +281,11 @@ function link_with_params($overrides = [])
                     </table>
                 </div>
 
-                <!-- Server-side pagination controls -->
                 <div class="table-footer">
                     <div class="rows-meta" id="rowsMeta">
                         <?php
                         $from = $total ? ($offset + 1) : 0;
                         $to   = min($offset + $per_page, $total);
-                        // Use concatenation to avoid variable interpolation issues with the en dash
                         echo htmlspecialchars($from . '–' . $to . ' of ' . $total, ENT_QUOTES, 'UTF-8');
                         ?>
                     </div>
@@ -306,7 +293,6 @@ function link_with_params($overrides = [])
                         <a class="page-btn <?= $page <= 1 ? 'disabled' : '' ?>" href="<?= $page <= 1 ? 'javascript:void(0)' : link_with_params(['page' => 1]) ?>" style="text-decoration: none;">First</a>
                         <a class="page-btn <?= $page <= 1 ? 'disabled' : '' ?>" href="<?= $page <= 1 ? 'javascript:void(0)' : link_with_params(['page' => $page - 1]) ?>" style="text-decoration: none;">Prev</a>
                         <?php
-                        // window of pages
                         $window = 5;
                         $start = max(1, $page - intdiv($window, 2));
                         $end = min($total_pages, $start + $window - 1);

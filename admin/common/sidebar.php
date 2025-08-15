@@ -3,9 +3,6 @@ if (!isset($active_page)) {
     $active_page = '';
 }
 
-/**
- * Renders one sidebar link with a single style attribute.
- */
 function sidebar_item(string $href, string $iconClass, string $label, string $key): void
 {
     $active = ($GLOBALS['active_page'] === $key);
@@ -15,11 +12,9 @@ function sidebar_item(string $href, string $iconClass, string $label, string $ke
     $color       = $active ? '#ffffff' : '#ecf0f1';
     $hoverBg     = 'rgba(255,255,255,0.08)';
 
-    // one style attribute only
     $style = "display:block;padding:14px 22px;color:$color;text-decoration:none;"
         . "border-left:4px solid $borderColor;background:$bg;";
 
-    // on hover we preview highlight and revert precisely to original colors
     $onOver  = "this.style.background='$hoverBg';this.style.color='#fff';";
     $onOut   = "this.style.background='$bg';this.style.color='$color';";
 
@@ -42,30 +37,24 @@ function sidebar_item(string $href, string $iconClass, string $label, string $ke
     <nav class="sidebar-menu" style="padding:10px 0;">
 
         <?php
-        // Dashboard
         sidebar_item('index.php',              'fa-solid fa-gauge-high',        'Dashboard',           'index');
 
-        // Professors
         sidebar_item('add-professor.php',      'fas fa-user-graduate',          'Add Professors',      'add-professor');
         sidebar_item('professor-list.php',     'fas fa-chalkboard-teacher',     'Professors',          'professors');
 
-        // Books
+
         sidebar_item('add-book.php',           'fas fa-book',                   'Add Book',            'add-book');
         sidebar_item('book-list.php',          'fas fa-book-open',              'Book List',           'book-list');
 
-        // Universities / Admission
         sidebar_item('add-university.php',     'fa-solid fa-building-columns',  'Add University',      'add-university');
-        // note: key kept as 'unicersity-list' to match your existing pages
         sidebar_item('university-list.php',    'fa-solid fa-building-columns',  'Universities',        'university-list');
 
-        // Scholarships
+
         sidebar_item('add-Scholarship.php',    'fas fa-money-bill-wave',        'Add Scholarships',    'add-scholarship');
         sidebar_item('scholarship-list.php',   'fas fa-money-bill-wave',        'Scholarships',        'scholarship-list');
 
-        // Reports
         sidebar_item('reports.php',            'fas fa-chart-bar',              'Reports',             'reports');
 
-        //logout
         sidebar_item('logic/logout-logic.php', 'fa-solid fa-arrow-right-from-bracket', 'Logout', 'logout');
         ?>
     </nav>

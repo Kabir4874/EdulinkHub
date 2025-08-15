@@ -1,13 +1,10 @@
 <?php
-// admin/scholarship-list.php
 require '../config/database.php';
-if (session_status() === PHP_SESSION_NONE) session_start();
+require __DIR__ . '/auth-check.php';
 
 $active_page = 'scholarship-list';
 
-/** -------------------------------------------------------------
- * Handle DELETE (POST)
- * --------------------------------------------------------------*/
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete'], $_POST['id'])) {
     $id = (int)$_POST['id'];
 
@@ -28,9 +25,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete'], $_POST['id'
     exit;
 }
 
-/** -------------------------------------------------------------
- * Read filters (GET) + pagination
- * --------------------------------------------------------------*/
 $q        = isset($_GET['q']) ? trim((string)$_GET['q']) : '';
 $type     = isset($_GET['type']) ? strtolower(trim((string)$_GET['type'])) : '';
 $per_page = isset($_GET['per_page']) ? max(1, (int)$_GET['per_page']) : 10;
@@ -44,7 +38,6 @@ $where  = [];
 $params = [];
 $types  = '';
 
-// search across title, description, university, department
 if ($q !== '') {
     $where[] = "(f.title LIKE ? OR f.description LIKE ? OR f.university LIKE ? OR f.department LIKE ?)";
     $like = '%' . $q . '%';
@@ -60,9 +53,7 @@ if ($type !== '') {
 
 $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
 
-/** -------------------------------------------------------------
- * Count total
- * --------------------------------------------------------------*/
+
 $total = 0;
 $sqlCount = "SELECT COUNT(*) FROM fundings f $whereSql";
 if ($stmt = mysqli_prepare($conn, $sqlCount)) {
@@ -79,9 +70,6 @@ $total_pages = max(1, (int)ceil($total / $per_page));
 $page = min($page, $total_pages);
 $offset = ($page - 1) * $per_page;
 
-/** -------------------------------------------------------------
- * Fetch page data (LEFT JOIN professors for name/email)
- * --------------------------------------------------------------*/
 $data = [];
 $sql = "SELECT
             f.id, f.type, f.title, f.description, f.link,
@@ -111,7 +99,6 @@ if ($stmt = mysqli_prepare($conn, $sql)) {
     $_SESSION['funding-error'] = 'Failed to load scholarships. (' . mysqli_error($conn) . ')';
 }
 
-/** helper to build links preserving filters */
 function link_with_params_s($overrides = [])
 {
     $params = [
@@ -133,7 +120,6 @@ function link_with_params_s($overrides = [])
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Scholarship List - EduLink Hub</title>
 
-    <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -159,13 +145,20 @@ function link_with_params_s($overrides = [])
                 </div>
             </div>
 
-            <!-- Flash messages -->
             <?php if (!empty($_SESSION['funding-success'])): ?>
                 <div class="alert alert-success">
                     <i class="fa-solid fa-circle-check"></i>
                     <span><?= htmlspecialchars($_SESSION['funding-success']) ?></span>
                 </div>
                 <?php unset($_SESSION['funding-success']); ?>
+            <?php endif; ?>
+
+            <?php if (!empty($_SESSION['add-scholarship-success'])): ?>
+                <div class="alert alert-success">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span><?= htmlspecialchars($_SESSION['add-scholarship-success']) ?></span>
+                </div>
+                <?php unset($_SESSION['add-scholarship-success']); ?>
             <?php endif; ?>
 
             <?php if (!empty($_SESSION['funding-error'])): ?>
@@ -176,7 +169,6 @@ function link_with_params_s($overrides = [])
                 <?php unset($_SESSION['funding-error']); ?>
             <?php endif; ?>
 
-            <!-- Toolbar (GET submit) -->
             <form class="toolbar" method="get" action="scholarship-list.php"
                 style="display:grid; grid-template-columns:1fr 200px 160px auto; gap:10px;">
                 <input class="input" type="search" name="q" value="<?= htmlspecialchars($q) ?>"
@@ -275,7 +267,6 @@ function link_with_params_s($overrides = [])
                     </table>
                 </div>
 
-                <!-- Server-side pagination controls -->
                 <div class="table-footer">
                     <div class="rows-meta" id="rowsMeta">
                         <?php

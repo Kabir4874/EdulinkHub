@@ -2,39 +2,38 @@
 require '../../config/database.php';
 
 if (!isset($_POST['submit'])) {
-    header('location: ' . ROOT_URL . 'admin/professor-list.php');
+    header('Location: ' . ROOT_URL . 'admin/professor-list.php');
     exit;
 }
 
-// Collect
-$id                     = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-$name                   = trim(filter_var($_POST['name'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-$researchInterestsInput = trim((string)($_POST['researchInterests'] ?? ''));
-$emailRaw               = trim((string)($_POST['contact_email'] ?? ''));
-$contact_phone          = trim(filter_var($_POST['contact_phone'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-$profileLinkRaw         = trim((string)($_POST['profileLink'] ?? ''));
-$availability           = isset($_POST['availability']) ? 'available' : 'not available';
-$existingImage          = trim((string)($_POST['existing_image'] ?? ''));
-$image                  = $_FILES['image'] ?? null;
+$id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+if ($id <= 0) {
+    $_SESSION['edit-professor-error'] = 'Invalid professor id.';
+    header('Location: ' . ROOT_URL . 'admin/professor-list.php');
+    exit;
+}
 
-// Preserve for re-fill on error
+$name            = trim(filter_var($_POST['name'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+$country         = trim(filter_var($_POST['country'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+$university_name = trim(filter_var($_POST['university_name'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+$emailRaw        = trim((string)($_POST['contact_email'] ?? ''));
+$contact_phone   = trim(filter_var($_POST['contact_phone'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+$profileLinkRaw  = trim((string)($_POST['profileLink'] ?? ''));
+$availability    = isset($_POST['availability']) ? 'available' : 'not available';
+$riInput         = trim((string)($_POST['researchInterests'] ?? ''));
+$image           = $_FILES['image'] ?? null;
+
 $_SESSION['edit-professor-data'] = [
     'name'              => $name,
-    'researchInterests' => $researchInterestsInput,
+    'country'           => $country,
+    'university_name'   => $university_name,
     'contact_email'     => $emailRaw,
     'contact_phone'     => $contact_phone,
     'profileLink'       => $profileLinkRaw,
-    'availability'      => $availability
+    'availability'      => $availability,
+    'researchInterests' => $riInput
 ];
 
-// Guard
-if ($id <= 0) {
-    $_SESSION['edit-professor-error'] = 'Invalid professor ID.';
-    header('location: ' . ROOT_URL . 'admin/professor-list.php');
-    exit;
-}
-
-// Validate
 if ($name === '') {
     $_SESSION['edit-professor-error'] = 'Please enter professor name.';
 } elseif (!filter_var($emailRaw, FILTER_VALIDATE_EMAIL)) {
@@ -43,47 +42,53 @@ if ($name === '') {
     $_SESSION['edit-professor-error'] = 'Profile link must be a valid URL.';
 }
 
-// researchInterests -> JSON array of strings
 $terms = [];
-if ($researchInterestsInput !== '' && preg_match('/^\s*\[.*\]\s*$/s', $researchInterestsInput)) {
-    $decoded = json_decode($researchInterestsInput, true);
-    if (is_array($decoded)) {
-        foreach ($decoded as $it) {
-            if (is_string($it)) {
+if (empty($_SESSION['edit-professor-error'])) {
+    if ($riInput !== '' && preg_match('/^\s*\[.*\]\s*$/s', $riInput)) {
+        $decoded = json_decode($riInput, true);
+        if (is_array($decoded)) {
+            foreach ($decoded as $it) {
+                if (!is_string($it)) continue;
                 $t = trim($it);
                 if ($t !== '') $terms[] = $t;
             }
+        } else {
+            $_SESSION['edit-professor-error'] = 'Invalid JSON format for research interests.';
         }
     } else {
-        $_SESSION['edit-professor-error'] = 'Invalid JSON format for research interests.';
-    }
-} else {
-    $parts = preg_split('/,/', $researchInterestsInput);
-    if (is_array($parts)) {
+        $parts = preg_split('/,/', $riInput);
         foreach ($parts as $p) {
             $t = trim($p, " \t\n\r\0\x0B\"'");
             if ($t !== '') $terms[] = $t;
         }
     }
+    $terms = array_values(array_unique(array_map(function ($s) {
+        $s = trim($s);
+        if (mb_strlen($s) > 255) $s = mb_substr($s, 0, 255);
+        return $s;
+    }, $terms), SORT_STRING));
 }
+
+if (empty($_SESSION['edit-professor-error']) && count($terms) === 0) {
+    $_SESSION['edit-professor-error'] = 'Please provide at least one research interest.';
+}
+
+$current = null;
 if (empty($_SESSION['edit-professor-error'])) {
-    $terms = array_values(array_unique($terms, SORT_STRING));
-    if (count($terms) === 0) {
-        $_SESSION['edit-professor-error'] = 'Please enter at least one research interest.';
+    if ($stmt = mysqli_prepare($conn, "SELECT image FROM professors WHERE id = ?")) {
+        mysqli_stmt_bind_param($stmt, 'i', $id);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        $current = mysqli_fetch_assoc($res);
+        mysqli_stmt_close($stmt);
+    }
+    if (!$current) {
+        $_SESSION['edit-professor-error'] = 'Professor not found.';
     }
 }
 
-$researchInterestsJson = '';
-if (empty($_SESSION['edit-professor-error'])) {
-    $researchInterestsJson = json_encode($terms, JSON_UNESCAPED_UNICODE);
-    if ($researchInterestsJson === false) {
-        $_SESSION['edit-professor-error'] = 'Failed to encode research interests.';
-    }
-}
-
-// Handle image (optional replace). uploads: ../uploads (DB stores just filename)
-$newImageFile = $existingImage; // default keep old
-$imageAbsToDelete = '';         // if replaced successfully, delete old
+$imageRelName = $current ? (string)$current['image'] : '';
+$imageAbsNew  = '';
 
 if (empty($_SESSION['edit-professor-error']) && $image && !empty($image['name'])) {
     if (!is_array($image) || !isset($image['name'], $image['tmp_name'])) {
@@ -91,7 +96,6 @@ if (empty($_SESSION['edit-professor-error']) && $image && !empty($image['name'])
     } else {
         $allowed = ['png', 'jpg', 'jpeg', 'webp'];
         $ext = strtolower(pathinfo($image['name'], PATHINFO_EXTENSION));
-
         if (!in_array($ext, $allowed, true)) {
             $_SESSION['edit-professor-error'] = 'Image must be PNG, JPG, JPEG, or WEBP.';
         } elseif (!is_uploaded_file($image['tmp_name'])) {
@@ -103,89 +107,86 @@ if (empty($_SESSION['edit-professor-error']) && $image && !empty($image['name'])
             if (!is_dir($uploadDirAbs)) {
                 @mkdir($uploadDirAbs, 0775, true);
             }
-
             $time     = time();
             $safeBase = preg_replace('/[^a-zA-Z0-9_\.-]/', '_', basename($image['name']));
             $fileName = $time . '_' . $safeBase;
 
-            $destAbs = $uploadDirAbs . $fileName;
-            if (!move_uploaded_file($image['tmp_name'], $destAbs)) {
+            $imageAbsNew  = $uploadDirAbs . $fileName;
+            $imageRelName = $fileName;
+
+            if (!move_uploaded_file($image['tmp_name'], $imageAbsNew)) {
                 $_SESSION['edit-professor-error'] = 'Failed to save uploaded image.';
-            } else {
-                // success: mark old image for deletion after DB update
-                $imageAbsToDelete = $existingImage ? ($uploadDirAbs . $existingImage) : '';
-                $newImageFile = $fileName; // DB stores just filename
+                $imageRelName = $current['image']; // revert to old
+                $imageAbsNew  = '';
             }
         }
     }
 }
 
-// If any error so far -> back to edit page
 if (!empty($_SESSION['edit-professor-error'])) {
-    header('location: ' . ROOT_URL . 'admin/edit-professor.php?id=' . $id);
+    header('Location: ' . ROOT_URL . 'admin/edit-professor.php?id=' . $id);
     exit;
 }
 
 $email       = $emailRaw;
 $profileLink = $profileLinkRaw === '' ? '' : $profileLinkRaw;
 
-// Update row
 $sql = "UPDATE professors
-        SET name = ?, image = ?, researchInterests = ?, contact_email = ?, contact_phone = ?, availability = ?, profileLink = ?
+        SET name = ?, country = ?, university_name = ?, contact_email = ?, contact_phone = ?, availability = ?, profileLink = ?, image = ?
         WHERE id = ?";
-$stmt = mysqli_prepare($conn, $sql);
-if (!$stmt) {
-    // If we uploaded a new image and prepare fails, try to remove it to avoid orphan
-    if ($newImageFile !== $existingImage && $newImageFile !== '') {
-        $uploadDirAbs = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR;
-        $newAbs = $uploadDirAbs . $newImageFile;
-        if (is_file($newAbs)) {
-            @unlink($newAbs);
-        }
-    }
+
+if (!($stmt = mysqli_prepare($conn, $sql))) {
+    if ($imageAbsNew && file_exists($imageAbsNew)) @unlink($imageAbsNew);
     $_SESSION['edit-professor-error'] = 'Database error (prepare failed).';
-    header('location: ' . ROOT_URL . 'admin/edit-professor.php?id=' . $id);
+    header('Location: ' . ROOT_URL . 'admin/edit-professor.php?id=' . $id);
     exit;
 }
 
 mysqli_stmt_bind_param(
     $stmt,
-    'sssssssi',
+    'ssssssssi',
     $name,
-    $newImageFile,          // just the filename ('' allowed)
-    $researchInterestsJson, // JSON array string
+    $country,
+    $university_name,
     $email,
     $contact_phone,
     $availability,
     $profileLink,
+    $imageRelName,
     $id
 );
 
 $ok = mysqli_stmt_execute($stmt);
 if (!$ok) {
-    // Rollback new file if DB failed
-    if ($newImageFile !== $existingImage && $newImageFile !== '') {
-        $uploadDirAbs = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR;
-        $newAbs = $uploadDirAbs . $newImageFile;
-        if (is_file($newAbs)) {
-            @unlink($newAbs);
-        }
-    }
+    if ($imageAbsNew && file_exists($imageAbsNew)) @unlink($imageAbsNew);
     $_SESSION['edit-professor-error'] = 'Failed to update professor. (' . mysqli_error($conn) . ')';
     mysqli_stmt_close($stmt);
-    header('location: ' . ROOT_URL . 'admin/edit-professor.php?id=' . $id);
+    header('Location: ' . ROOT_URL . 'admin/edit-professor.php?id=' . $id);
     exit;
 }
-
 mysqli_stmt_close($stmt);
 
-// Delete old image if we replaced it and file exists
-if ($imageAbsToDelete && is_file($imageAbsToDelete)) {
-    @unlink($imageAbsToDelete);
+if ($imageAbsNew && !empty($current['image'])) {
+    $oldAbs = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . ltrim($current['image'], '/\\');
+    if (is_file($oldAbs)) @unlink($oldAbs);
 }
 
-// Success
+if ($stmt = mysqli_prepare($conn, "DELETE FROM professor_research_interests WHERE professor_id = ?")) {
+    mysqli_stmt_bind_param($stmt, 'i', $id);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
+}
+
+if (count($terms) > 0) {
+    if ($stmt = mysqli_prepare($conn, "INSERT INTO professor_research_interests (professor_id, interest) VALUES (?, ?)")) {
+        foreach ($terms as $t) {
+            mysqli_stmt_bind_param($stmt, 'is', $id, $t);
+        }
+        mysqli_stmt_close($stmt);
+    }
+}
+
 unset($_SESSION['edit-professor-data']);
-$_SESSION['edit-professor-success'] = 'Professor updated successfully.';
-header('location: ' . ROOT_URL . 'admin/edit-professor.php?id=' . $id);
+$_SESSION['professor-success'] = 'Professor updated successfully.';
+header('Location: ' . ROOT_URL . 'admin/professor-list.php');
 exit;

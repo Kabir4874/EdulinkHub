@@ -1,10 +1,9 @@
 <?php
 require '../config/database.php';
-if (session_status() === PHP_SESSION_NONE) session_start();
+require __DIR__ . '/auth-check.php';
 
 $active_page = 'university-list';
 
-/* -------- Validate & fetch by id -------- */
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if ($id <= 0) {
     $_SESSION['university-error'] = 'Invalid university id.';
@@ -26,7 +25,6 @@ if (!$uni) {
     exit;
 }
 
-/* Prefill: if previous POST failed, use saved old values */
 $old = $_SESSION['edit-university-data'] ?? [];
 unset($_SESSION['edit-university-data']);
 
@@ -48,7 +46,6 @@ $imageName   = $uni['image'] ?? '';
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Edit University - EduLink Hub</title>
 
-    <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -67,7 +64,6 @@ $imageName   = $uni['image'] ?? '';
         <div class="content">
             <h1 class="page-title"><i class="fa-solid fa-building-columns"></i> Edit University</h1>
 
-            <!-- Flash messages -->
             <?php if (!empty($_SESSION['edit-university-error'])): ?>
                 <div class="alert alert-error">
                     <i class="fa-solid fa-triangle-exclamation"></i>
@@ -88,7 +84,6 @@ $imageName   = $uni['image'] ?? '';
                 <input type="hidden" name="id" value="<?= (int)$uni['id'] ?>">
                 <input type="hidden" name="existing_image" value="<?= htmlspecialchars($imageName) ?>">
 
-                <!-- Row: Name & Location -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="name">University Name</label>
@@ -113,7 +108,6 @@ $imageName   = $uni['image'] ?? '';
                     </div>
                 </div>
 
-                <!-- Row: Program Type & Discipline -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="programType">Program Type</label>
@@ -138,7 +132,6 @@ $imageName   = $uni['image'] ?? '';
                     </div>
                 </div>
 
-                <!-- Admission Link -->
                 <div class="form-group">
                     <label for="admissionLink">Admission Link</label>
                     <input
@@ -150,7 +143,6 @@ $imageName   = $uni['image'] ?? '';
                         value="<?= htmlspecialchars($admissionLink) ?>">
                 </div>
 
-                <!-- Row: Application Dates -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="applicationDate">Application Start Date</label>
@@ -163,7 +155,6 @@ $imageName   = $uni['image'] ?? '';
                     </div>
                 </div>
 
-                <!-- Admit Card & Image -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="admitCardDownloadDate">Admit Card Download Date</label>

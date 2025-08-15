@@ -1,10 +1,9 @@
 <?php
 require '../config/database.php';
-if (session_status() === PHP_SESSION_NONE) session_start();
+require __DIR__ . '/auth-check.php';
 
 $active_page = 'book-list';
 
-/* -------- Validate & fetch book by id -------- */
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if ($id <= 0) {
     $_SESSION['book-error'] = 'Invalid book id.';
@@ -13,7 +12,7 @@ if ($id <= 0) {
 }
 
 $book = null;
-if ($stmt = mysqli_prepare($conn, "SELECT id, title, image, author, category, description, pdfLink, suggestedFor, isPaid, price FROM books WHERE id = ?")) {
+if ($stmt = mysqli_prepare($conn, "SELECT id, title, image, author, category, description, pdf, suggestedFor, isPaid, price FROM books WHERE id = ?")) {
     mysqli_stmt_bind_param($stmt, 'i', $id);
     mysqli_stmt_execute($stmt);
     $res = mysqli_stmt_get_result($stmt);
@@ -27,29 +26,25 @@ if (!$book) {
     exit;
 }
 
-/* Prefill: if previous POST failed, use saved old values */
 $old = $_SESSION['edit-book-data'] ?? [];
 unset($_SESSION['edit-book-data']);
 
-/* Helper to prefill a field: prefer old (after failed submit), else db value */
 function old_or($key, $fallback)
 {
     return isset($_SESSION['__old'][$key]) ? $_SESSION['__old'][$key] : $fallback;
 }
 
-// Stash an internal map for convenience in value echos below
 $_SESSION['__old'] = $old;
 
 $title        = isset($old['title'])        ? $old['title']        : ($book['title'] ?? '');
 $author       = isset($old['author'])       ? $old['author']       : ($book['author'] ?? '');
 $category     = isset($old['category'])     ? $old['category']     : ($book['category'] ?? '');
 $description  = isset($old['description'])  ? $old['description']  : ($book['description'] ?? '');
-$pdfLink      = isset($old['pdfLink'])      ? $old['pdfLink']      : ($book['pdfLink'] ?? '');
+$pdf      = isset($old['pdf'])      ? $old['pdf']      : ($book['pdf'] ?? '');
 $isPaidOld    = isset($old['isPaid'])       ? (int)$old['isPaid']  : (int)($book['isPaid'] ?? 0);
 $price        = isset($old['price'])        ? $old['price']        : ($book['price'] ?? '');
 $imageName    = $book['image'] ?? '';
 
-/* suggestedFor display: decode JSON -> comma list */
 $suggestedForRaw = '';
 if (isset($old['suggestedFor'])) {
     $suggestedForRaw = $old['suggestedFor'];
@@ -63,13 +58,11 @@ if (isset($old['suggestedFor'])) {
             }, $arr), fn($v) => $v !== ''));
             $suggestedForRaw = implode(', ', $clean);
         } else {
-            // fallback: show whatever was stored
             $suggestedForRaw = (string)$sf;
         }
     }
 }
 
-// Cleanup temp old holder
 unset($_SESSION['__old']);
 ?>
 <!DOCTYPE html>
@@ -80,7 +73,6 @@ unset($_SESSION['__old']);
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Edit Book - EduLink Hub</title>
 
-    <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -99,7 +91,6 @@ unset($_SESSION['__old']);
         <div class="content">
             <h1 class="page-title"><i class="fa-solid fa-book-pen"></i> Edit Book</h1>
 
-            <!-- Flash messages -->
             <?php if (!empty($_SESSION['edit-book-error'])): ?>
                 <div class="alert alert-error">
                     <i class="fa-solid fa-triangle-exclamation"></i>
@@ -112,7 +103,6 @@ unset($_SESSION['__old']);
                 <input type="hidden" name="id" value="<?= (int)$book['id'] ?>">
                 <input type="hidden" name="existing_image" value="<?= htmlspecialchars($imageName) ?>">
 
-                <!-- Row: Title & Author -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="title">Book Title</label>
@@ -137,7 +127,6 @@ unset($_SESSION['__old']);
                     </div>
                 </div>
 
-                <!-- Row: Category -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="category">Category</label>
@@ -151,7 +140,6 @@ unset($_SESSION['__old']);
                     </div>
                 </div>
 
-                <!-- Row: Image & PDF Link -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="image">Cover Image (optional)</label>
@@ -169,24 +157,22 @@ unset($_SESSION['__old']);
                     </div>
 
                     <div class="form-group">
-                        <label for="pdfLink">PDF Link (URL)</label>
+                        <label for="pdf">PDF Link (URL)</label>
                         <input
                             type="url"
-                            id="pdfLink"
-                            name="pdfLink"
+                            id="pdf"
+                            name="pdf"
                             placeholder="https://example.com/book.pdf"
-                            value="<?= htmlspecialchars($pdfLink) ?>">
+                            value="<?= htmlspecialchars($pdf) ?>">
                         <span class="hint">Provide a direct or shared link to the PDF.</span>
                     </div>
                 </div>
 
-                <!-- Description -->
                 <div class="form-group">
                     <label for="description">Description</label>
                     <textarea id="description" name="description" placeholder="Short summary or key details about the book"><?= htmlspecialchars($description) ?></textarea>
                 </div>
 
-                <!-- Suggested For (required) -->
                 <div class="form-group">
                     <label for="suggestedFor">Suggested For <small>(required)</small></label>
                     <textarea
@@ -196,7 +182,6 @@ unset($_SESSION['__old']);
                         placeholder='Comma-separated or JSON array, e.g. ["SSC candidates","Beginners"]'><?= htmlspecialchars($suggestedForRaw) ?></textarea>
                 </div>
 
-                <!-- Row: Paid & Price -->
                 <div class="form-row">
                     <div class="form-group checkbox-group">
                         <input type="checkbox" id="isPaid" name="isPaid" <?= $isPaidOld ? 'checked' : '' ?>>

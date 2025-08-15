@@ -1,50 +1,44 @@
 <?php
-// admin/logic/add-book-logic.php
 require '../../config/database.php';
-if (session_status() === PHP_SESSION_NONE) session_start();
 
 if (!isset($_POST['submit'])) {
     header('location: ' . ROOT_URL . 'admin/add-book.php');
     exit;
 }
 
-/* ---------------- Collect & sanitize ---------------- */
 $title         = trim(filter_var($_POST['title']  ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 $author        = trim(filter_var($_POST['author'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 $category      = trim((string)($_POST['category'] ?? ''));
 $description   = trim((string)($_POST['description'] ?? ''));
-$suggestedRaw  = trim((string)($_POST['suggestedFor'] ?? ''));   // REQUIRED (will be saved as JSON)
-$pdfLink       = trim((string)($_POST['pdfLink'] ?? ''));        // URL stored in column pdfLink (nullable)
+$suggestedRaw  = trim((string)($_POST['suggestedFor'] ?? ''));
+$pdf       = trim((string)($_POST['pdfLink'] ?? ''));
 $isPaid        = isset($_POST['isPaid']) ? 1 : 0;
 $priceInput    = trim((string)($_POST['price'] ?? ''));
 $image         = $_FILES['image'] ?? null;
 
-/* Preserve for re-fill on error */
 $_SESSION['add-book-data'] = [
     'title'        => $title,
     'author'       => $author,
     'category'     => $category,
     'description'  => $description,
     'suggestedFor' => $suggestedRaw,
-    'pdfLink'      => $pdfLink,
+    'pdf'      => $pdf,
     'isPaid'       => $isPaid,
     'price'        => $priceInput,
 ];
 
-/* ---------------- Validation ---------------- */
 if ($title === '') {
     $_SESSION['add-book-error'] = 'Please enter the book title.';
 } elseif ($author === '') {
     $_SESSION['add-book-error'] = 'Please enter the author name.';
 } elseif (!in_array($category, ['Admission', 'Job Exam', 'Skill-Based'], true)) {
     $_SESSION['add-book-error'] = 'Please select a valid category.';
-} elseif ($pdfLink !== '' && !filter_var($pdfLink, FILTER_VALIDATE_URL)) {
+} elseif ($pdf !== '' && !filter_var($pdf, FILTER_VALIDATE_URL)) {
     $_SESSION['add-book-error'] = 'Please provide a valid PDF link (URL).';
 } elseif ($isPaid && ($priceInput === '' || !is_numeric($priceInput) || (float)$priceInput <= 0)) {
     $_SESSION['add-book-error'] = 'Please provide a valid price for paid books.';
 }
 
-/* ---------------- suggestedFor (REQUIRED) -> JSON array ---------------- */
 $suggestedForJson = null;
 if (empty($_SESSION['add-book-error'])) {
     if ($suggestedRaw === '') {
@@ -53,7 +47,6 @@ if (empty($_SESSION['add-book-error'])) {
         $list = [];
 
         if (preg_match('/^\s*\[.*\]\s*$/s', $suggestedRaw)) {
-            // JSON array path
             $decoded = json_decode($suggestedRaw, true);
             if (is_array($decoded)) {
                 foreach ($decoded as $it) {
@@ -66,7 +59,6 @@ if (empty($_SESSION['add-book-error'])) {
                 $_SESSION['add-book-error'] = 'Invalid JSON in “Suggested For”. Use an array of strings.';
             }
         } else {
-            // CSV / newline path
             $parts = preg_split('/[\r\n,]+/', $suggestedRaw);
             foreach ($parts as $p) {
                 $t = trim($p, " \t\n\r\0\x0B\"'");
@@ -88,8 +80,7 @@ if (empty($_SESSION['add-book-error'])) {
     }
 }
 
-/* ---------------- Image upload (optional) ---------------- */
-$imageFileName = ''; // store just the filename in DB
+$imageFileName = '';
 $uploadsDir = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR;
 
 if (empty($_SESSION['add-book-error']) && $image && !empty($image['name'])) {
@@ -115,41 +106,35 @@ if (empty($_SESSION['add-book-error']) && $image && !empty($image['name'])) {
     }
 }
 
-/* On any validation/upload error */
 if (!empty($_SESSION['add-book-error'])) {
     if ($imageFileName && is_file($uploadsDir . $imageFileName)) @unlink($uploadsDir . $imageFileName);
     header('location: ' . ROOT_URL . 'admin/add-book.php');
     exit;
 }
 
-/* ---------------- Normalize price ---------------- */
 $price = null;
 if ($isPaid) {
     $price = (float)$priceInput;
 } else {
-    $isPaid = 0; // force-off if not checked
+    $isPaid = 0;
 }
 
-/* Treat empty pdfLink as NULL (in case of a NOT EMPTY constraint later) */
-$pdfLinkForDb = ($pdfLink === '') ? null : $pdfLink;
+$pdfForDb = ($pdf === '') ? null : $pdf;
 
-/* ---------------- Build dynamic INSERT (handle NULLs correctly) ---------------- */
 $cols   = ['title', 'image', 'author', 'category', 'description', 'suggestedFor', 'isPaid'];
 $place  = ['?', '?', '?', '?', '?', '?', '?'];
 $types  = 'ssssssi';
 $params = [$title, $imageFileName, $author, $category, $description, $suggestedForJson, $isPaid];
 
-// pdfLink (nullable)
-$cols[] = 'pdfLink';
-if ($pdfLinkForDb === null) {
+$cols[] = 'pdf';
+if ($pdfForDb === null) {
     $place[] = 'NULL';
 } else {
     $place[]  = '?';
     $types   .= 's';
-    $params[] = $pdfLinkForDb;
+    $params[] = $pdfForDb;
 }
 
-// price (nullable if free)
 $cols[] = 'price';
 if ($price === null) {
     $place[] = 'NULL';
@@ -183,7 +168,6 @@ if (!$ok) {
 
 mysqli_stmt_close($stmt);
 
-/* ---------------- Success ---------------- */
 unset($_SESSION['add-book-data']);
 $_SESSION['add-book-success'] = 'Book added successfully.';
 header('location: ' . ROOT_URL . 'admin/book-list.php');

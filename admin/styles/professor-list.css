@@ -29,11 +29,9 @@ body {
   min-height: 100vh;
 }
 
-/* Main Content Styles */
 .main-content {
   flex: 1;
   margin-left: 250px;
-  /* keep in sync with sidebar width */
   min-height: 100vh;
 }
 
@@ -101,7 +99,6 @@ body {
   background: var(--warning-color);
 }
 
-/* Toolbar */
 .toolbar {
   display: grid;
   grid-template-columns: 1fr 220px 160px;
@@ -132,7 +129,6 @@ body {
   background: #fff;
 }
 
-/* Card & Table */
 .card {
   background: #fff;
   border-radius: 12px;
@@ -177,7 +173,6 @@ tbody tr:hover {
   background: #fafafa;
 }
 
-/* Avatar */
 .avatar {
   width: 44px;
   height: 44px;
@@ -187,7 +182,6 @@ tbody tr:hover {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
 }
 
-/* Badges */
 .badge {
   display: inline-block;
   padding: 6px 10px;
@@ -220,7 +214,6 @@ tbody tr:hover {
   text-decoration: underline;
 }
 
-/* Footer / Pagination */
 .table-footer {
   display: flex;
   align-items: center;

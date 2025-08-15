@@ -29,7 +29,6 @@ body {
 .main-content {
   flex: 1;
   margin-left: 250px;
-  /* align with your sidebar width */
   min-height: 100vh;
 }
 
@@ -117,7 +116,6 @@ body {
   color: var(--secondary-color);
 }
 
-/* KPI Cards */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
@@ -188,7 +186,6 @@ body {
   border-top: 3px solid #f59e0b;
 }
 
-/* Cards */
 .card {
   background: #fff;
   border-radius: 12px;
@@ -218,7 +215,6 @@ body {
   height: 320px;
 }
 
-/* Tables */
 .table-wrap {
   overflow-x: auto;
 }
@@ -274,7 +270,6 @@ tbody tr:hover {
   border-color: rgba(247, 37, 133, 0.3);
 }
 
-/* Simple grid for 2-column section under KPIs */
 .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;

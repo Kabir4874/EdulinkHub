@@ -15,19 +15,15 @@ $active_page = 'signin';
 </head>
 
 <body>
-    <!-- App Bar -->
     <div class="app-bar">
         <h1>Admin Sign In</h1>
     </div>
 
-    <!-- Main Container -->
     <div class="container">
-        <!-- Logo -->
         <div class="logo-container">
             <img src="./Edulink Hub logo.jpg" alt="EduLink Logo" class="logo">
         </div>
 
-        <!-- Error Message (hidden by default) -->
         <?php if (isset($_SESSION['error'])): ?>
             <div class="error-message" id="errorMessage">
                 <?php
@@ -37,10 +33,8 @@ $active_page = 'signin';
             </div>
         <?php endif; ?>
 
-        <!-- Sign In Form -->
         <form id="signInForm" action="../admin/logic/signin-logic.php" method="POST">
 
-            <!-- Email Field -->
             <div class="form-group">
                 <label for="email">Admin Email</label>
                 <div class="input-container">
@@ -49,7 +43,6 @@ $active_page = 'signin';
                 </div>
             </div>
 
-            <!-- Password Field -->
             <div class="form-group">
                 <label for="password">Admin Password</label>
                 <div class="input-container">
@@ -61,7 +54,6 @@ $active_page = 'signin';
                 </div>
             </div>
 
-            <!-- Submit Button -->
             <button type="submit" class="submit-btn" id="submitBtn">
                 <div class="btn-content">
                     <span>Admin Sign In</span>
@@ -71,7 +63,6 @@ $active_page = 'signin';
     </div>
 
     <script>
-        // Password visibility toggle
         document.getElementById('togglePassword').addEventListener('click', function() {
             const passwordInput = document.getElementById('password');
             const passwordIcon = this.querySelector('i');

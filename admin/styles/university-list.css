@@ -27,11 +27,9 @@ body {
   min-height: 100vh;
 }
 
-/* Main Content Styles */
 .main-content {
   flex: 1;
   margin-left: 250px;
-  /* keep in sync with sidebar width */
   min-height: 100vh;
 }
 
@@ -99,7 +97,6 @@ body {
   background: var(--warning-color);
 }
 
-/* Toolbar */
 .toolbar {
   display: grid;
   grid-template-columns: 1fr 240px 160px;
@@ -130,7 +127,6 @@ body {
   background: #fff;
 }
 
-/* Card & Table */
 .card {
   background: #fff;
   border-radius: 12px;
@@ -175,7 +171,6 @@ tbody tr:hover {
   background: #fafafa;
 }
 
-/* Image */
 .banner {
   width: 64px;
   height: 40px;
@@ -195,7 +190,6 @@ tbody tr:hover {
   text-decoration: underline;
 }
 
-/* Footer / Pagination */
 .table-footer {
   display: flex;
   align-items: center;

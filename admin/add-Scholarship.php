@@ -1,17 +1,15 @@
 <?php
 require '../config/database.php';
-if (session_status() === PHP_SESSION_NONE) session_start();
+require __DIR__ . '/auth-check.php';
 
 $active_page = 'add-scholarship';
 
-// fetch professors for the dropdown
 $professors = [];
 $res = mysqli_query($conn, "SELECT id, name, contact_email FROM professors ORDER BY name ASC");
 if ($res) {
     while ($row = mysqli_fetch_assoc($res)) $professors[] = $row;
 }
 
-// Values to (re)fill the form after an error
 $old = $_SESSION['add-scholarship-data'] ?? [];
 unset($_SESSION['add-scholarship-data']);
 ?>
@@ -23,7 +21,6 @@ unset($_SESSION['add-scholarship-data']);
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Add Scholarship - EduLink Hub</title>
 
-    <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -42,7 +39,6 @@ unset($_SESSION['add-scholarship-data']);
         <div class="content">
             <h1 class="page-title"><i class="fa-solid fa-graduation-cap"></i> Add Scholarship</h1>
 
-            <!-- Flash messages -->
             <?php if (!empty($_SESSION['add-scholarship-error'])): ?>
                 <div class="alert alert-error">
                     <i class="fa-solid fa-triangle-exclamation"></i>
@@ -51,16 +47,9 @@ unset($_SESSION['add-scholarship-data']);
                 <?php unset($_SESSION['add-scholarship-error']); ?>
             <?php endif; ?>
 
-            <?php if (!empty($_SESSION['add-scholarship-success'])): ?>
-                <div class="alert alert-success">
-                    <i class="fa-solid fa-circle-check"></i>
-                    <span><?= htmlspecialchars($_SESSION['add-scholarship-success']) ?></span>
-                </div>
-                <?php unset($_SESSION['add-scholarship-success']); ?>
-            <?php endif; ?>
+
 
             <form class="sch-form" action="logic/add-scholarship-logic.php" method="post" novalidate>
-                <!-- Row: Title & Type -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="title">Scholarship Title</label>
@@ -84,7 +73,6 @@ unset($_SESSION['add-scholarship-data']);
                     </div>
                 </div>
 
-                <!-- Link -->
                 <div class="form-group">
                     <label for="link">Official Link</label>
                     <input
@@ -96,7 +84,6 @@ unset($_SESSION['add-scholarship-data']);
                         value="<?= isset($old['link']) ? htmlspecialchars($old['link']) : '' ?>">
                 </div>
 
-                <!-- Dates -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="applyDate">Application Start Date</label>
@@ -109,19 +96,16 @@ unset($_SESSION['add-scholarship-data']);
                     </div>
                 </div>
 
-                <!-- Description -->
                 <div class="form-group">
                     <label for="description">Description</label>
                     <textarea id="description" name="description" placeholder="Brief description of the scholarship, benefits, duration, etc."><?= isset($old['description']) ? htmlspecialchars($old['description']) : '' ?></textarea>
                 </div>
 
-                <!-- Eligibility -->
                 <div class="form-group">
                     <label for="eligibilityCriteria">Eligibility Criteria</label>
                     <textarea id="eligibilityCriteria" name="eligibilityCriteria" placeholder="Eligibility requirements (e.g., GPA, nationality, discipline)"><?= isset($old['eligibilityCriteria']) ? htmlspecialchars($old['eligibilityCriteria']) : '' ?></textarea>
                 </div>
 
-                <!-- UNIVERSITY SECTION -->
                 <?php
                 $showUni = ($ot === 'university');
                 $showProf = ($ot === 'professor');
@@ -145,7 +129,6 @@ unset($_SESSION['add-scholarship-data']);
                     <div class="hint">This section is required for university-type scholarships.</div>
                 </div>
 
-                <!-- PROFESSOR SECTION -->
                 <div id="professorSection" class="section" style="<?= $showProf ? '' : 'display:none;' ?>">
                     <div class="section-title"><i class="fa-solid fa-user-tie"></i> Select Professor</div>
                     <div class="form-group">
@@ -170,7 +153,6 @@ unset($_SESSION['add-scholarship-data']);
     </main>
 
     <script>
-        // Toggle sections based on type
         (function() {
             const typeSel = document.getElementById('type');
             const uniSec = document.getElementById('universitySection');

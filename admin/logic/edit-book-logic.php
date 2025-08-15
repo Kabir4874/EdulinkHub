@@ -1,20 +1,18 @@
 <?php
 require '../../config/database.php';
-if (session_status() === PHP_SESSION_NONE) session_start();
 
 if (!isset($_POST['submit'])) {
     header('location: ' . ROOT_URL . 'admin/book-list.php');
     exit;
 }
 
-/* ---------------- Collect & sanitize ---------------- */
 $id            = isset($_POST['id']) ? (int)$_POST['id'] : 0;
 $title         = trim(filter_var($_POST['title']  ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 $author        = trim(filter_var($_POST['author'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 $category      = trim((string)($_POST['category'] ?? ''));
 $description   = trim((string)($_POST['description'] ?? ''));
-$suggestedRaw  = trim((string)($_POST['suggestedFor'] ?? ''));   // REQUIRED (will be saved as JSON)
-$pdfLink       = trim((string)($_POST['pdfLink'] ?? ''));        // URL stored in pdfLink (nullable)
+$suggestedRaw  = trim((string)($_POST['suggestedFor'] ?? ''));
+$pdf       = trim((string)($_POST['pdfLink'] ?? ''));
 $isPaid        = isset($_POST['isPaid']) ? 1 : 0;
 $priceInput    = trim((string)($_POST['price'] ?? ''));
 $existingImage = trim((string)($_POST['existing_image'] ?? ''));
@@ -26,32 +24,29 @@ if ($id <= 0) {
     exit;
 }
 
-/* Preserve for re-fill on error */
 $_SESSION['edit-book-data'] = [
     'title'        => $title,
     'author'       => $author,
     'category'     => $category,
     'description'  => $description,
     'suggestedFor' => $suggestedRaw,
-    'pdfLink'      => $pdfLink,
+    'pdf'      => $pdf,
     'isPaid'       => $isPaid,
     'price'        => $priceInput,
 ];
 
-/* ---------------- Validation ---------------- */
 if ($title === '') {
     $_SESSION['edit-book-error'] = 'Please enter the book title.';
 } elseif ($author === '') {
     $_SESSION['edit-book-error'] = 'Please enter the author name.';
 } elseif (!in_array($category, ['Admission', 'Job Exam', 'Skill-Based'], true)) {
     $_SESSION['edit-book-error'] = 'Please select a valid category.';
-} elseif ($pdfLink !== '' && !filter_var($pdfLink, FILTER_VALIDATE_URL)) {
+} elseif ($pdf !== '' && !filter_var($pdf, FILTER_VALIDATE_URL)) {
     $_SESSION['edit-book-error'] = 'Please provide a valid PDF link (URL).';
 } elseif ($isPaid && ($priceInput === '' || !is_numeric($priceInput) || (float)$priceInput <= 0)) {
     $_SESSION['edit-book-error'] = 'Please provide a valid price for paid books.';
 }
 
-/* ---------------- suggestedFor (REQUIRED) -> JSON array ---------------- */
 $suggestedForJson = null;
 if (empty($_SESSION['edit-book-error'])) {
     if ($suggestedRaw === '') {
@@ -60,7 +55,6 @@ if (empty($_SESSION['edit-book-error'])) {
         $list = [];
 
         if (preg_match('/^\s*\[.*\]\s*$/s', $suggestedRaw)) {
-            // JSON array path
             $decoded = json_decode($suggestedRaw, true);
             if (is_array($decoded)) {
                 foreach ($decoded as $it) {
@@ -73,7 +67,6 @@ if (empty($_SESSION['edit-book-error'])) {
                 $_SESSION['edit-book-error'] = 'Invalid JSON in “Suggested For”. Use an array of strings.';
             }
         } else {
-            // CSV / newline path
             $parts = preg_split('/[\r\n,]+/', $suggestedRaw);
             foreach ($parts as $p) {
                 $t = trim($p, " \t\n\r\0\x0B\"'");
@@ -95,9 +88,8 @@ if (empty($_SESSION['edit-book-error'])) {
     }
 }
 
-/* ---------------- Optional image upload ---------------- */
 $uploadsDir = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR;
-$newImageFile = ''; // if updated, we set this and later delete old
+$newImageFile = '';
 
 if (empty($_SESSION['edit-book-error']) && $image && !empty($image['name'])) {
     $allowedImg = ['png', 'jpg', 'jpeg', 'webp'];
@@ -122,14 +114,12 @@ if (empty($_SESSION['edit-book-error']) && $image && !empty($image['name'])) {
     }
 }
 
-/* On any validation/upload error */
 if (!empty($_SESSION['edit-book-error'])) {
     if ($newImageFile && is_file($uploadsDir . $newImageFile)) @unlink($uploadsDir . $newImageFile);
     header('location: ' . ROOT_URL . 'admin/edit-book.php?id=' . $id);
     exit;
 }
 
-/* ---------------- Normalize price & pdfLink ---------------- */
 $price = null;
 if ($isPaid) {
     $price = (float)$priceInput;
@@ -137,46 +127,43 @@ if ($isPaid) {
     $isPaid = 0;
 }
 
-$pdfLinkForDb = ($pdfLink === '') ? null : $pdfLink;
+$pdfForDb = ($pdf === '') ? null : $pdf;
 
-/* ---------------- Build dynamic UPDATE ---------------- */
 $cols   = [
     'title = ?',
     'author = ?',
     'category = ?',
     'description = ?',
-    'pdfLink = ' . ($pdfLinkForDb === null ? 'NULL' : '?'),
+    'pdf = ' . ($pdfForDb === null ? 'NULL' : '?'),
     'suggestedFor = ?',
     'isPaid = ?',
     'price = ' . ($price === null ? 'NULL' : '?'),
 ];
 
-$types  = 'ssss';                 // title, author, category, description
+$types  = 'ssss';
 $params = [$title, $author, $category, $description];
 
-if ($pdfLinkForDb !== null) {     // add ? for pdfLink
+if ($pdfForDb !== null) {
     $types  .= 's';
-    $params[] = $pdfLinkForDb;
+    $params[] = $pdfForDb;
 }
-$types  .= 's';                   // suggestedFor
+$types  .= 's';
 $params[] = $suggestedForJson;
 
-$types  .= 'i';                   // isPaid
+$types  .= 'i';
 $params[] = $isPaid;
 
-if ($price !== null) {            // add ? for price
+if ($price !== null) {
     $types  .= 'd';
     $params[] = $price;
 }
 
-/* image column: update only if new file uploaded */
 if ($newImageFile !== '') {
     $cols[]  = 'image = ?';
     $types  .= 's';
     $params[] = $newImageFile;
 }
 
-/* WHERE id = ? */
 $types  .= 'i';
 $params[] = $id;
 
@@ -201,7 +188,6 @@ if (!$ok) {
 
 mysqli_stmt_close($stmt);
 
-/* delete old image only after successful update and only if a new image was saved */
 if ($newImageFile !== '' && $existingImage !== '') {
     $oldAbs = $uploadsDir . ltrim($existingImage, '/\\');
     if (is_file($oldAbs)) {
@@ -209,7 +195,6 @@ if ($newImageFile !== '' && $existingImage !== '') {
     }
 }
 
-/* ---------------- Success ---------------- */
 unset($_SESSION['edit-book-data']);
 $_SESSION['edit-book-success'] = 'Book updated successfully.';
 header('location: ' . ROOT_URL . 'admin/book-list.php');
