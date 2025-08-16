@@ -139,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
     mysqli_stmt_close($stmt);
     unset($_SESSION['settings-data']);
     $_SESSION['settings-success'] = 'Profile updated successfully.';
-    header('location: ' . ROOT_URL . 'htmlclient/profile1.php');
+    header('location: ' . ROOT_URL . 'htmlclient/settings1.php');
     exit;
 }
 ?>

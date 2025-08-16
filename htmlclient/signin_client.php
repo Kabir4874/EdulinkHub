@@ -7,47 +7,14 @@ if (!$db) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
-// Start HTML output with SweetAlert2 dependencies
 echo '<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Status</title>
-    <!-- SweetAlert2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
-    <!-- Animate.css for additional animations -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-    <style>
-        .swal2-popup {
-            border-radius: 16px !important;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2) !important;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        .swal2-success {
-            position: relative;
-        }
-        .swal2-success::before {
-            content: "";
-            position: absolute;
-            width: 80px;
-            height: 80px;
-            background: rgba(72, 219, 113, 0.2);
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% { transform: scale(0.8); opacity: 0.5; }
-            70% { transform: scale(1.1); opacity: 0.1; }
-            100% { transform: scale(0.8); opacity: 0; }
-        }
-        .swal2-title {
-            color: white !important;
-        }
-        .swal2-html-container {
-            color: rgba(255,255,255,0.8) !important;
-        }
-    </style>
 </head>
 <body>';
 
@@ -60,43 +27,61 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if (mysqli_num_rows($result) == 1) {
         $user = mysqli_fetch_assoc($result);
-        
-        // Compare plain text passwords (INSECURE - only for testing)
+
+        // Compare plain text passwords (replace with password_verify later for security)
         if ($password === $user['password']) {
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['email'] = $user['email'];
-            $_SESSION['full_name'] = $user['name'];
             
-            echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
-                  <script>
-                      Swal.fire({
-                          title: 'Login Successful!',
-                          text: 'Welcome back, " . addslashes($user['name']) . "',
-                          icon: 'success',
-                          showClass: {
-                              popup: 'animate__animated animate__bounceInDown'
-                          },
-                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                          timer: 2000,
-                          timerProgressBar: true,
-                          willClose: () => {
-                              window.location.href = 'index1.php';
-                          }
-                      });
-                  </script>";
-            exit();
+            // Check role
+            if ($user['role'] === 'user') {
+                // ✅ Allow login
+                $_SESSION['user_id']   = $user['id'];
+                $_SESSION['email']     = $user['email'];
+                $_SESSION['full_name'] = $user['name'];
+                $_SESSION['role']      = $user['role'];
+                
+                echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
+                      <script>
+                          Swal.fire({
+                              title: 'Login Successful!',
+                              text: 'Welcome back, " . addslashes($user['name']) . "',
+                              icon: 'success',
+                              showClass: { popup: 'animate__animated animate__bounceInDown' },
+                              timer: 2000,
+                              timerProgressBar: true,
+                              willClose: () => {
+                                  window.location.href = 'index1.php';
+                              }
+                          });
+                      </script>";
+                exit();
+            } else {
+                // ❌ Deny if role = admin
+                echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
+                      <script>
+                          Swal.fire({
+                              title: 'Access Denied',
+                              text: 'Admin accounts are not allowed to log in here',
+                              icon: 'warning',
+                              showClass: { popup: 'animate__animated animate__shakeX' },
+                              background: 'linear-gradient(135deg, #f7971e 0%, #ffd200 100%)',
+                              confirmButtonColor: '#e67e22'
+                          }).then(() => {
+                              window.location.href = 'login.php';
+                          });
+                      </script>";
+                exit();
+            }
         }
     }
-    
+
+    // Invalid email/password
     echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
           <script>
               Swal.fire({
                   title: 'Login Failed',
                   text: 'Invalid email or password',
                   icon: 'error',
-                  showClass: {
-                      popup: 'animate__animated animate__headShake'
-                  },
+                  showClass: { popup: 'animate__animated animate__headShake' },
                   background: 'linear-gradient(135deg, #f85032 0%, #e73827 100%)',
                   confirmButtonColor: '#e74c3c'
               }).then(() => {
