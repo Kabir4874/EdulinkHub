@@ -1,5 +1,5 @@
 <?php
-session_start();
+
 if (isset($_SESSION['login_success']) && $_SESSION['login_success'] === true) {
     echo "
     <script>
@@ -325,6 +325,7 @@ $bookCount = getCount($conn, "books");
                 margin-bottom: 1.5rem;
                 background: linear-gradient(90deg, var(--primary), var(--secondary));
                 -webkit-background-clip: text;
+                 background-clip: text; 
                 -webkit-text-fill-color: transparent;
             }
             
@@ -1179,6 +1180,7 @@ $conn->close();
     align-items: center;
     gap: 0.8rem;
     font-size: 0.95rem;
+    color: white;
   }
 
   .contact-info i {
@@ -1311,7 +1313,7 @@ document.addEventListener('DOMContentLoaded', function() {
   nextBtn.addEventListener('click', () => {
     carousel.scrollBy({ left: 330, behavior: 'smooth' });
     clearInterval(autoScrollInterval);
-    setTimeout(startAutoScroll, 10000); // Resume after 10 seconds
+    setTimeout(startAutoScroll, 5000); // Resume after 10 seconds
   });
   
   // Start auto-scroll

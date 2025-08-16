@@ -1,3 +1,14 @@
+<?php
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+$conn = new mysqli("localhost", "kabir", "admin", "edulinkhub");
+// your code to fetch user data from database
+
+?>
+
 <!DOCTYPE php>
 <php lang="en">
 <head>
@@ -874,9 +885,9 @@
       <div class="navbar-container">
         <!-- Logo with animation -->
         <div class="logo">
-          <a href="../index1.php">
+          <a href="index1.php">
             <img src="../images/image1.png" alt="EdUHub Logo" class="logo-img">
-            <span class="logo-text pulse">EdUHub</span>
+            <span class="logo-text pulse">EduLinkHub</span>
           </a>
         </div>
 
@@ -897,38 +908,13 @@
           </li>
 
           <!-- Enhanced Mega Dropdown -->
-          <li class="dropdown">
-            <a href="#" class="nav-link hover-underline">
+          <li class="">
+            <a href="web-development.php" class="nav-link hover-underline">
               <i class="fas fa-book"></i>
               <span>Book</span>
-              <i class="fas fa-chevron-down dropdown-arrow"></i>
+              
             </a>
-            <div class="mega-dropdown">
-              <div class="mega-dropdown-column">
-                <h4>Technology</h4>
-                <ul>
-                  <li><a href="web-development.php"><i class="fab fa-html5"></i> Web Development</a></li>
-                  <li><a href="design-books.php"><i class="fas fa-paint-brush"></i> Design</a></li>
-                  <li><a href="ai-ml-books.php"><i class="fas fa-robot"></i> AI & ML</a></li>
-                  <li><a href="it-software-books.php"><i class="fas fa-laptop-code"></i> IT & Software</a></li>
-                </ul>
-              </div>
-              <div class="mega-dropdown-column">
-                <h4>Career</h4>
-                <ul>
-                  <li><a href="admission.php"><i class="fas fa-graduation-cap"></i> Admission</a></li>
-                  <li><a href="public-private-job.php"><i class="fas fa-briefcase"></i> Jobs</a></li>
-                  <li><a href="bcs-books.php"><i class="fas fa-landmark"></i> BCS</a></li>
-                </ul>
-              </div>
-              <div class="mega-dropdown-column">
-                <h4>Academic</h4>
-                <ul>
-                  <li><a href="academic-books.php"><i class="fas fa-book-open"></i> Academic</a></li>
-                  <li><a href="language-books.php"><i class="fas fa-language"></i> Language</a></li>
-                </ul>
-              </div>
-            </div>
+            
           </li>
 
           <!-- Study Abroad Dropdown -->
@@ -987,18 +973,71 @@
             </div>
           </div>
 
-          <!-- User Profile with Animation -->
-          <div class="user-profile" id="userProfile">
-            <div class="profile-pic-container">
-              <img src="../images/Profile.jpg" alt="User" class="profile-pic" />
-              <div class="active-indicator"></div>
-            </div>
-            <div class="user-dropdown">
-              <a href="profile1.php"><i class="fas fa-user-circle"></i> Profile</a>
-              <a href="settings1.php"><i class="fas fa-cog"></i> Settings</a>
-              <a href="login.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
-            </div>
-          </div>
+          <?php
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Initialize variables
+$profilePicture = '../images/default-profile.jpg'; // Default fallback image
+$debugInfo = ''; // For debugging purposes
+
+try {
+    // Check if user is logged in
+    if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
+        $userId = (int)$_SESSION['user_id'];
+        
+        // Prepare and execute database query
+        $stmt = mysqli_prepare($conn, "SELECT profilePicture FROM users WHERE id = ?");
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, 'i', $userId);
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_bind_result($stmt, $dbProfilePicture);
+            
+            if (mysqli_stmt_fetch($stmt)) {
+                // Validate and sanitize the image path
+                if (!empty($dbProfilePicture) && is_string($dbProfilePicture)) {
+                    $sanitizedPath = '../uploads/' . basename($dbProfilePicture);
+                    
+                    // Verify file exists and is readable
+                    if (file_exists($sanitizedPath) && is_readable($sanitizedPath)) {
+                        $profilePicture = $sanitizedPath;
+                    } else {
+                        $debugInfo = "File not found or not readable: " . htmlspecialchars($sanitizedPath);
+                        error_log($debugInfo);
+                    }
+                }
+            }
+            mysqli_stmt_close($stmt);
+        } else {
+            $debugInfo = "Database query preparation failed: " . mysqli_error($conn);
+            error_log($debugInfo);
+        }
+    }
+} catch (Exception $e) {
+    error_log("Profile picture error: " . $e->getMessage());
+    $profilePicture = '../images/default-profile.jpg'; // Ensure fallback on error
+}
+
+// For debugging - remove in production
+// echo "<!-- Debug: $debugInfo -->";
+?>
+<!-- User Profile with Animation -->
+<div class="user-profile" id="userProfile">
+    <div class="profile-pic-container">
+        <img src="<?php echo htmlspecialchars($profilePicture); ?>" 
+             alt="User Profile" 
+             class="profile-pic" 
+             onerror="this.src='../images/default-profile.jpg';this.onerror=null;" />
+        <div class="active-indicator"></div>
+    </div>
+    <div class="user-dropdown">
+        <a href="profile1.php"><i class="fas fa-user-circle"></i> Profile</a>
+        
+        <a href="login.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+</div>
         </div>
       </div>
     </nav>

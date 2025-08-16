@@ -414,23 +414,56 @@
             font-size: 0.9rem;
         }
 
-        /* Recommendations */
-        .recommendations {
-            margin-top: 3rem;
-            animation: fadeIn 0.6s ease-out;
-        }
+       
+/* Updated Recommendations CSS */
+.recommendations {
+    margin-top: 3rem;
+    animation: fadeIn 0.6s ease-out;
+    overflow: hidden; /* Hide the horizontal scrollbar */
+    position: relative;
+}
 
-        .recommendations h2 {
-            margin-bottom: 1.5rem;
-            color: var(--dark-color);
-            font-size: 1.5rem;
-        }
+.recommendations h2 {
+    margin-bottom: 1.5rem;
+    color: var(--dark-color);
+    font-size: 1.5rem;
+}
 
-        .recommendation-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 1.5rem;
-        }
+.recommendation-container {
+    width: 100%;
+    overflow: hidden;
+}
+
+.recommendation-grid {
+    display: flex;
+    gap: 1.5rem;
+    padding-bottom: 20px; /* Space for scrollbar if needed */
+    animation: scroll 30s linear infinite;
+}
+
+.recommendation-item {
+    min-width: 200px; /* Fixed width for each item */
+    flex-shrink: 0;
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.recommendation-item:hover {
+    transform: translateY(-5px);
+}
+
+@keyframes scroll {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(calc(-100% + 100vw)); /* Scroll all the way left */
+    }
+}
+
 
         /* Animations */
         @keyframes fadeInDown {
@@ -995,7 +1028,7 @@
                     <i class="fas fa-shopping-cart"></i>
                     <h3>Your cart is empty</h3>
                     <p>Looks like you haven't added any items to your cart yet.</p>
-                    <a href="products.php" class="btn-primary">
+                    <a href="web-development.php" class="btn-primary">
                         <i class="fas fa-book-open"></i> Browse Books
                     </a>
                 </div>
@@ -1051,63 +1084,71 @@
         localStorage.setItem('cart', JSON.stringify(cart));
     }
     
-    // Function to load recommendations from database
-    function loadRecommendationsFromDatabase() {
-        showLoading();
-        
-        // AJAX call to fetch recommendations from server
-        fetch('get_recommendations.php')
-            .then(response => response.json())
-            .then(books => {
-                let html = '';
-                
-                if (books.length > 0) {
-                    // Create scrollable container
-                    html = '<div class="recommendations-scroll">';
-                    
-                    books.forEach(book => {
-                        const discountPercent = book.originalPrice ? 
-                            Math.round(((book.originalPrice - book.price) / book.originalPrice) * 100) : 0;
-                        
-                        html += `
-                            <div class="recommendation-item">
-                                <img src="${book.image || 'https://via.placeholder.com/200x300?text=Book'}" 
-                                     alt="${book.title}" class="recommendation-img">
-                                <h3>${book.title}</h3>
-                                <p>by ${book.author || 'Unknown Author'}</p>
-                                <div class="price">
-                                    <span class="current-price">৳${book.price.toFixed(2)}</span>
-                                    ${book.originalPrice ? `
-                                        <span class="original-price">৳${book.originalPrice.toFixed(2)}</span>
-                                        <span class="discount-badge">${discountPercent}% OFF</span>
-                                    ` : ''}
-                                </div>
-                                <button class="btn-primary" 
-                                        onclick="cartManager.addToCart('${escapeString(book.title)}', 
-                                        ${book.price}, 
-                                        '${book.image || ''}')">
-                                    <i class="fas fa-cart-plus"></i> Add to Cart
-                                </button>
-                            </div>
-                        `;
-                    });
-                    
-                    html += '</div>'; // Close scrollable container
-                } else {
-                    html = '<p>No recommendations available at the moment.</p>';
-                }
-                
-                elements.recommendations.innerHTML = html;
-            })
-            .catch(error => {
-                console.error('Error loading recommendations:', error);
-                elements.recommendations.innerHTML = '<p>Could not load recommendations. Please try again later.</p>';
-            })
-            .finally(() => {
-                elements.loadingOverlay.classList.remove('active');
-            });
-    }
+
+// Updated loadRecommendationsFromDatabase function
+function loadRecommendationsFromDatabase() {
+    showLoading();
     
+    fetch('get_recommendations.php')
+        .then(response => response.json())
+        .then(books => {
+            let html = '';
+            
+            if (books.length > 0) {
+                // Duplicate items to create infinite loop effect
+                const duplicatedBooks = [...books, ...books];
+                
+                duplicatedBooks.forEach(book => {
+                    const discountPercent = book.originalPrice ? 
+                        Math.round(((book.originalPrice - book.price) / book.originalPrice) * 100) : 0;
+                    
+                    html += `
+                        <div class="recommendation-item">
+                            <img src="${book.image || 'https://via.placeholder.com/200x300?text=Book'}" 
+                                 alt="${book.title}" class="recommendation-img">
+                            <h3>${book.title}</h3>
+                            <p>by ${book.author || 'Unknown Author'}</p>
+                            <div class="price">
+                                <span class="current-price">৳${book.price.toFixed(2)}</span>
+                                ${book.originalPrice ? `
+                                    <span class="original-price">৳${book.originalPrice.toFixed(2)}</span>
+                                    <span class="discount-badge">${discountPercent}% OFF</span>
+                                ` : ''}
+                            </div>
+                            <button class="btn-primary" 
+                                    onclick="cartManager.addToCart('${escapeString(book.title)}', 
+                                    ${book.price}, 
+                                    '${book.image || ''}')">
+                                <i class="fas fa-cart-plus"></i> Add to Cart
+                            </button>
+                        </div>
+                    `;
+                });
+            } else {
+                html = '<p>No recommendations available at the moment.</p>';
+            }
+            
+            document.getElementById('recommendations').innerHTML = html;
+            
+            // Pause animation on hover
+            const grid = document.querySelector('.recommendation-grid');
+            grid.addEventListener('mouseenter', () => {
+                grid.style.animationPlayState = 'paused';
+            });
+            grid.addEventListener('mouseleave', () => {
+                grid.style.animationPlayState = 'running';
+            });
+        })
+        .catch(error => {
+            console.error('Error loading recommendations:', error);
+            document.getElementById('recommendations').innerHTML = 
+                '<p>Could not load recommendations. Please try again later.</p>';
+        })
+        .finally(() => {
+            document.querySelector('.loading-overlay').classList.remove('active');
+        });
+}
+
     // Add dynamic styles
     document.head.insertAdjacentHTML('beforeend', `
         <style>

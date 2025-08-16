@@ -1,3 +1,7 @@
+<?php
+session_start();
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,8 +18,11 @@
   background: #f8f9fa;
   padding: 20px;
   border-radius: 8px;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+    margin-left: 300px;
+    margin-right: 300px;
 }
 
 .search-filter-section form {
@@ -239,8 +246,8 @@
 <!-- Hero Section -->
 <section class="hero book-hero-web">
   <div class="hero-content">
-    <h1>Web Development Books</h1>
-    <p>Learn HTML, CSS, JavaScript, React, and more with top web development resources.</p>
+    <h1>From Average to Extraordinary</h1>
+    <p>Your Development Journey Starts Here</p>
   </div>
 </section>
 
