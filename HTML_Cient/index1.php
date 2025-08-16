@@ -1180,6 +1180,7 @@ $conn->close();
     align-items: center;
     gap: 0.8rem;
     font-size: 0.95rem;
+    color: white;
   }
 
   .contact-info i {

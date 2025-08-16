@@ -28,9 +28,23 @@
                         <span><?php echo htmlspecialchars($_SESSION['username']); ?></span>
                     </div>
                 <?php else: ?>
-                    <div class="login-box">
-                        <i class="fas fa-user"></i>
-                        <a href="login.php">Login</a>
+                    <div class="login-options">
+                        <div class="login-box" onclick="toggleLoginOptions()">
+                            <i class="fas fa-user"></i>
+                            <span>Login</span>
+                            <i class="fas fa-chevron-down dropdown-arrow"></i>
+                        </div>
+                        
+                        <div class="login-dropdown" id="loginDropdown">
+                            <a href="login.php?type=user" class="login-option">
+                                <i class="fas fa-user"></i>
+                                Login as User
+                            </a>
+                            <a href="../admin/signin.php" class="login-option">
+                                <i class="fas fa-user-shield"></i>
+                                Login as Admin
+                            </a>
+                        </div>
                     </div>
                 <?php endif; ?>
                 <div class="menu-box" id="menuBox">
@@ -40,6 +54,20 @@
             </div>
         </div>
     </div>
+    <script>
+    // Add this to your existing JavaScript
+    function toggleLoginOptions() {
+        document.querySelector('.login-options').classList.toggle('active');
+    }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        const loginOptions = document.querySelector('.login-options');
+        if (!loginOptions.contains(event.target)) {
+            loginOptions.classList.remove('active');
+        }
+    });
+</script>
 
     <!-- Fullscreen Menu Overlay -->
     <div class="menu-overlay" id="menuOverlay">
@@ -236,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 </style>
                 <div class="hero-cta animate__animated animate__fadeInUp animate__delay-2s">
-                    <button class="btn-primary btn-large">Start Learning Today</button>
+                    <button class="btn-primary btn-large"><a href="login.php">Start Learning Today</a></button>
                     <a href="https://www.canva.com/design/DAGwHu9H0Jg/0xHpCawzJjuellEY-MwzkA/watch?utm_content=DAGwHu9H0Jg&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=hf1136c72f2" target="_blank">
                     <button class="btn-secondary">Watch Demo</button>
                     </a>
@@ -614,6 +642,7 @@ $conn->close();
     align-items: center;
     gap: 0.8rem;
     font-size: 0.95rem;
+    color: white;
   }
 
   .contact-info i {
