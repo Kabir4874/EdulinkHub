@@ -1,5 +1,12 @@
 <?php
- require '../config/database.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+$conn = new mysqli("localhost", "kabir", "admin", "edulinkhub");
+// your code to fetch user data from database
+
 ?>
 
 <!DOCTYPE php>
@@ -992,25 +999,62 @@
           </div>
 
           <?php
-          // Fetch user's profile picture
-$profilePicture = '../images/default-profile.jpg'; // default image
-if (isset($_SESSION['user_id'])) {
-    $userId = $_SESSION['user_id'];
-    $stmt = mysqli_prepare($conn, "SELECT profilePicture FROM users WHERE id = ?");
-    mysqli_stmt_bind_param($stmt, 'i', $userId);
-    mysqli_stmt_execute($stmt);
-    mysqli_stmt_bind_result($stmt, $dbProfilePicture);
-    if (mysqli_stmt_fetch($stmt)) {
-        if (!empty($dbProfilePicture)) {
-            $profilePicture = '../uploads/' . $dbProfilePicture;
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Initialize variables
+$profilePicture = '../images/default-profile.jpg'; // Default fallback image
+$debugInfo = ''; // For debugging purposes
+
+try {
+    // Check if user is logged in
+    if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
+        $userId = (int)$_SESSION['user_id'];
+        
+        // Prepare and execute database query
+        $stmt = mysqli_prepare($conn, "SELECT profilePicture FROM users WHERE id = ?");
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, 'i', $userId);
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_bind_result($stmt, $dbProfilePicture);
+            
+            if (mysqli_stmt_fetch($stmt)) {
+                // Validate and sanitize the image path
+                if (!empty($dbProfilePicture) && is_string($dbProfilePicture)) {
+                    $sanitizedPath = '../uploads/' . basename($dbProfilePicture);
+                    
+                    // Verify file exists and is readable
+                    if (file_exists($sanitizedPath) && is_readable($sanitizedPath)) {
+                        $profilePicture = $sanitizedPath;
+                    } else {
+                        $debugInfo = "File not found or not readable: " . htmlspecialchars($sanitizedPath);
+                        error_log($debugInfo);
+                    }
+                }
+            }
+            mysqli_stmt_close($stmt);
+        } else {
+            $debugInfo = "Database query preparation failed: " . mysqli_error($conn);
+            error_log($debugInfo);
         }
     }
-    mysqli_stmt_close($stmt);
-}?>
-          <!-- User Profile with Animation -->
+} catch (Exception $e) {
+    error_log("Profile picture error: " . $e->getMessage());
+    $profilePicture = '../images/default-profile.jpg'; // Ensure fallback on error
+}
+
+// For debugging - remove in production
+// echo "<!-- Debug: $debugInfo -->";
+?>
+<!-- User Profile with Animation -->
 <div class="user-profile" id="userProfile">
     <div class="profile-pic-container">
-        <img src="<?php echo htmlspecialchars($profilePicture); ?>" alt="User" class="profile-pic" />
+        <img src="<?php echo htmlspecialchars($profilePicture); ?>" 
+             alt="User Profile" 
+             class="profile-pic" 
+             onerror="this.src='../images/default-profile.jpg';this.onerror=null;" />
         <div class="active-indicator"></div>
     </div>
     <div class="user-dropdown">

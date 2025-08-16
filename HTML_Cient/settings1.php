@@ -9,6 +9,7 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+
 // Get user data
 $user_id = $_SESSION['user_id'];
 $sql = "SELECT * FROM users WHERE id = ?";
@@ -20,7 +21,7 @@ $user = mysqli_fetch_assoc($result);
 mysqli_stmt_close($stmt);
 
 // Initialize variables
-$oldImagePath = $user['profilePicture'] ? dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . $user['profilePicture'] : '';
+$oldImagePath = $user['profilePicture'] ? dirname(__DIR__, 1) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . $user['profilePicture'] : '';
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
@@ -153,6 +154,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
     
 </head>
 <body>
+<button class="floating-back" aria-label="Go back">
+        <i class="fas fa-arrow-left"></i>
+    </button>
+
+<!-- Add this CSS to your style section -->
+<style>
+    /* Floating Back Button */
+        .floating-back {
+            position: fixed;
+            top: 25px;
+            left: 25px;
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--box-shadow);
+            z-index: 1000;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            color: var(--primary);
+        }
+
+        .floating-back:hover {
+            transform: translateX(-5px);
+            color: var(--secondary);
+        }
+</style>
+
+<!-- Add this improved JavaScript for better back button functionality -->
+<script>
+    // Back button functionality
+        document.querySelector('.floating-back').addEventListener('click', function() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = '../HTML_Cient/index1.php';
+            }
+        });
+</script>
     <section class="settings-container">
     <h2>Account Settings</h2>
     
@@ -310,6 +354,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
     --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
     --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
     --transition: all 0.3s ease;
+    --box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
 .settings-container {

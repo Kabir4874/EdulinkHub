@@ -9,110 +9,137 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
   <link rel="stylesheet" href="../CSS/style_home_index1.css">
        
 </head>
 <body>
-    
 <!-- Header -->
-    <header>
-        <div class="top-bar">
-            <div class="container top-bar-container">
-                <div class="logo">
-                    <img src="../images/image1.png" alt="Logo">
-                </div>
-                <div class="nav">
+<header>
+    <div class="top-bar">
+        <div class="container top-bar-container">
+            <div class="logo">
+                <img src="../images/image1.png" alt="Logo">
+            </div>
+            <div class="nav">
+                <?php if(isset($_SESSION['user_id'])): ?>
+                    <div class="user-profile">
+                        <i class="fas fa-user-circle"></i>
+                        <span><?php echo htmlspecialchars($_SESSION['username']); ?></span>
+                    </div>
+                <?php else: ?>
                     <div class="login-box">
                         <i class="fas fa-user"></i>
                         <a href="login.php">Login</a>
                     </div>
-                    <div class="menu-box" id="menuBox">
-                        <i class="fas fa-bars"></i>
-                        <a href="#">Menu</a>
+                <?php endif; ?>
+                <div class="menu-box" id="menuBox">
+                    <i class="fas fa-bars"></i>
+                    <a href="#">Menu</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen Menu Overlay -->
+    <div class="menu-overlay" id="menuOverlay">
+        <span class="close-btn" id="closeBtn"><i class="fas fa-times"></i></span>
+
+        <div class="menu-content">
+            <!-- Left Vertical Nav -->
+            <div class="menu-nav">
+                <a href="#" data-section="home" class="menu-link active">Home</a>
+                <a href="#" data-section="book" class="menu-link">Book</a>
+                <a href="#" data-section="study-abroad" class="menu-link">Study Abroad</a>
+                <a href="#" data-section="admission" class="menu-link">Admission</a>
+                <a href="#" data-section="about-contact" class="menu-link">About & Contact</a>
+            </div>
+
+            <!-- Right Dynamic Content -->
+            <div class="menu-main">
+                <!-- Home -->
+                <div id="home" class="menu-section active">
+                    <h1>Welcome to EduLinkHub</h1>
+                    <p>Discover the best resources for your academic journey.</p>
+                </div>
+
+                <!-- Book -->
+                <div id="book" class="menu-section">
+                    <h1>Book Resources</h1>
+                    <?php if(isset($_SESSION['user_id'])): ?>
+                        <div class="menu-links">
+                            <a href="books.php">All Books</a>
+                            <a href="study-guides.php">Study Guides</a>
+                            <a href="recommendations.php">Recommended Books</a>
+                        </div>
+                    <?php else: ?>
+                        <div class="login-required">
+                            <i class="fas fa-lock"></i>
+                            <p>Please <a href="login.php">login</a> to access our book resources.</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Study Abroad -->
+                <div id="study-abroad" class="menu-section">
+                    <h1>Study Abroad Options</h1>
+                    <?php if(isset($_SESSION['user_id'])): ?>
+                        <div class="menu-links">
+                            <a href="professors.php">Professors</a>
+                            <a href="scholarships.php">Scholarship Opportunities</a>
+                            <a href="application-process.php">Application Process</a>
+                            <a href="testimonials.php">Student Testimonials</a>
+                        </div>
+                    <?php else: ?>
+                        <div class="login-required">
+                            <i class="fas fa-lock"></i>
+                            <p>Please <a href="login.php">login</a> to view study abroad options.</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Admission -->
+                <div id="admission" class="menu-section">
+                    <h1>Admission Process</h1>
+                    <p>Comprehensive guidance for university admissions worldwide.</p>
+                    <?php if(isset($_SESSION['user_id'])): ?>
+                        <div class="menu-links">
+                            <a href="universities.php">Universities</a>
+                            <a href="deadlines.php">Deadlines</a>
+                            <a href="documentation.php">Documentation</a>
+                        </div>
+                    <?php else: ?>
+                        <div class="login-required">
+                            <i class="fas fa-lock"></i>
+                            <p>Please <a href="login.php">login</a> to access admission resources.</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- About & Contact -->
+                <div id="about-contact" class="menu-section">
+                    <h1>About Us & Contact</h1>
+                    <p>We are dedicated to helping students achieve their academic goals.</p>
+                    <div class="menu-links">
+                        <a href="mailto:contact@edulinkhub.com">Email: contact@edulinkhub.com</a>
+                        <a href="tel:+1234567890">Phone: +1 (234) 567-890</a>
+                        <a href="team.php">Our Team</a>
+                        <a href="faq.php">FAQ</a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Fullscreen Portfolio Overlay -->
-<div class="menu-overlay" id="menuOverlay">
-    <span class="close-btn" id="closeBtn"><i class="fas fa-times"></i></span>
-
-    <div class="menu-content">
-        <!-- Left Vertical Nav -->
-        <div class="menu-nav">
-            <a href="#" data-section="home" class="menu-link active">Home</a>
-            <a href="#" data-section="book" class="menu-link">Book</a>
-            <a href="#" data-section="study-abroad" class="menu-link">Study Abroad</a>
-            <a href="#" data-section="admission" class="menu-link">Admission</a>
-            <a href="#" data-section="about-contact" class="menu-link">About & Contact</a>
-        </div>
-
-        <!-- Right Dynamic Content -->
-        <div class="menu-main">
-            <!-- Home -->
-            <div id="home" class="menu-section active">
-                <h1>Home</h1>
-                <p>Welcome to our educational platform. Discover the best resources and guidance for your academic journey.</p>
-            </div>
-
-            <!-- Book -->
-            <div id="book" class="menu-section">
-                <h1>Book Resources</h1>
-                <div class="menu-links">
-                    <a href="#">ALL Books</a>
-                    <!-- <a href="#"></a>
-                    <a href="#">Study Guides</a> -->
-                </div>
-            </div>
-
-            <!-- Study Abroad -->
-            <div id="study-abroad" class="menu-section">
-                <h1>Study Abroad Options</h1>
-                <div class="menu-links">
-                    <a href="#">Professor</a>
-                    <a href="#">Scholarship Opportunities</a>
-                    <a href="#">Application Process</a>
-                    <a href="#">Student Testimonials</a>
-                </div>
-            </div>
-
-            <!-- Admission -->
-            <div id="admission" class="menu-section">
-                <h1>Admission Process</h1>
-                <p>Comprehensive guidance for university admissions worldwide. We cover everything from application preparation to visa assistance.</p>
-                <div class="menu-links">
-                    <a href="#">Universities</a>
-                    <a href="#">Deadlines</a>
-                    <a href="#">Documentation</a>
-                </div>
-            </div>
-
-            <!-- About & Contact -->
-            <div id="about-contact" class="menu-section">
-                <h1>About Us & Contact</h1>
-                <p>We are dedicated to helping students achieve their academic goals through personalized guidance and resources.</p>
-                <div class="menu-links">
-                    <a href="mailto:contact@edulinkhub.com">Email: contact@edulink.com</a>
-                    <a href="tel:+1234567890">Phone: +1 (234) 567-890</a>
-                    <a href="#">Our Team</a>
-                    <a href="#">FAQ</a>
-                </div>
-            </div>
+        <!-- Bottom Quick Links -->
+        <div class="quick-links">
+            <a href="app.php">Download App</a>
+            <a href="privacy.php">Privacy Policy</a>
+            <a href="terms.php">Terms of Service</a>
+            <a href="careers.php">Careers</a>
+            <a href="feedback.php">Feedback</a>
         </div>
     </div>
-
-    <!-- Bottom Quick Links -->
-    <div class="quick-links">
-        <a href="#">Download App</a>
-        <a href="#">Privacy Policy</a>
-        <a href="#">Terms of Service</a>
-        <a href="#">Careers</a>
-        <a href="#">Feedback</a>
-    </div>
-</div>
-
-    </header>
+</header>
 
     <!-- Hero Section -->
     <section id="home" class="hero">
@@ -130,17 +157,84 @@
                     Experience the most comprehensive education platform designed for modern learners.
                     Join thousands of students already transforming their careers.
                 </p>
-                <div class="hero-stats animate__animated animate__fadeInUp animate__delay-1s">
-                    <div class="stat-item">
-                        <h3>20+</h3>
-                        <p>Course Categories</p>
-                    </div>
-                    <div class="stat-divider"></div>
-                    <div class="stat-item">
-                        <h3>6+</h3>
-                        <p>Learning Formats</p>
-                    </div>
-                </div>
+<div class="hero-stats animate__animated animate__fadeInUp animate__delay-1s">
+    <?php
+    // Database connection
+    $conn = new mysqli("localhost", "kabir", "admin", "edulinkhub");
+    
+    // Check connection
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+    }
+    
+    // Get counts from database
+    $countryCount = 0;
+    $scholarshipCount = 0;
+    
+    // Count distinct countries from professors table
+    $countriesQuery = "SELECT COUNT(country) AS total FROM professors";
+    $result = $conn->query($countriesQuery);
+    if ($result && $result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $countryCount = $row['total'];
+    }
+    
+    // Count scholarships from fundings table
+    $scholarshipsQuery = "SELECT COUNT(id) AS total FROM fundings";
+    $result = $conn->query($scholarshipsQuery);
+    if ($result && $result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $scholarshipCount = $row['total'];
+    }
+    
+    $conn->close();
+    ?>
+    
+    <div class="stat-item">
+        <h3 id="country-counter">0</h3>
+        <p>Countries Available</p>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+        <h3 id="scholarship-counter">0</h3>
+        <p>Scholarship Opportunities</p>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate counting for countries (slower - 3 seconds)
+    animateCount('country-counter', <?php echo $countryCount; ?>, 3000);
+    
+    // Animate counting for scholarships (slower - 3 seconds)
+    animateCount('scholarship-counter', <?php echo $scholarshipCount; ?>, 3000);
+    
+    function animateCount(elementId, target, duration) {
+        const element = document.getElementById(elementId);
+        const start = 0;
+        const increment = target / (duration / 16); // 60fps
+        let current = start;
+        
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                clearInterval(timer);
+                current = target;
+                element.textContent = Math.floor(target); // Removed the + sign
+            } else {
+                element.textContent = Math.floor(current);
+            }
+        }, 16);
+    }
+});
+</script>
+
+<style>
+/* Add smooth transition for the counting effect */
+.stat-item h3 {
+    transition: all 0.3s ease;
+}
+</style>
                 <div class="hero-cta animate__animated animate__fadeInUp animate__delay-2s">
                     <button class="btn-primary btn-large">Start Learning Today</button>
                     <a href="https://www.canva.com/design/DAGwHu9H0Jg/0xHpCawzJjuellEY-MwzkA/watch?utm_content=DAGwHu9H0Jg&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=hf1136c72f2" target="_blank">
@@ -231,114 +325,443 @@
         </div>
     </section>
 
-<div class="container">
-    <div class="section-header">
-        <h2><span>Popular Courses</span></h2>
-        <a href="#" class="view-btn">View All Courses</a>
+<?php
+// Database connection
+$conn = new mysqli("localhost", "kabir", "admin", "edulinkhub");
+if ($conn->connect_error) die("Connection failed: " . $conn->connect_error);
+
+// Fetch professors with their research interests
+$sql = "SELECT p.*, GROUP_CONCAT(pri.interest SEPARATOR ' • ') AS research_interests 
+        FROM professors p
+        LEFT JOIN professor_research_interests pri ON p.id = pri.professor_id
+        GROUP BY p.id"; // Show 12 random professors
+$result = $conn->query($sql);
+$professors = $result->fetch_all(MYSQLI_ASSOC);
+$conn->close();
+?>
+
+<section class="professors-showcase">
+  <div class="section-header">
+    <h2 class="section-title">Renowned International Professors</h2>
+    <p class="section-subtitle">Meet our distinguished faculty members</p>
+  </div>
+
+  <div class="professors-carousel-container">
+    <div class="professors-carousel-track" id="professorsCarousel">
+      <?php if (!empty($professors)): ?>
+        <?php foreach ($professors as $professor): ?>
+          <div class="professor-card" data-professor-id="<?= $professor['id'] ?>">
+            <div class="card-inner">
+              <div class="card-front">
+                <div class="professor-image">
+                  <img src="<?= htmlspecialchars($professor['image'] ?: 'https://randomuser.me/api/portraits/lego/'.rand(1,9).'.jpg') ?>" 
+                    alt="Portrait of <?= htmlspecialchars($professor['name']) ?>, professor at <?= htmlspecialchars($professor['university_name']) ?>, shown in a professional academic setting. The environment suggests a welcoming and knowledgeable atmosphere.">
+                  <div class="country-flag" data-country="<?= strtolower(explode(' ', $professor['country'])[0]) ?>"></div>
+                </div>
+                <div class="professor-meta">
+                  <h3 class="professor-name"><?= htmlspecialchars($professor['name']) ?></h3>
+                  <p class="professor-university"><?= htmlspecialchars($professor['university_name']) ?></p>
+                  <div class="expertise-tags">
+                    <?php foreach (explode(' • ', $professor['research_interests']) as $interest): ?>
+                      <span class="tag"><?= htmlspecialchars($interest) ?></span>
+                    <?php endforeach; ?>
+                  </div>
+                </div>
+              </div>
+              <div class="card-back">
+                <div class="back-content">
+                  <h3>About Professor</h3>
+                  <div class="contact-info">
+                    <p><i class="fas fa-envelope"></i> <?= htmlspecialchars($professor['contact_email']) ?></p>
+                    <p><i class="fas fa-phone"></i> <?= htmlspecialchars($professor['contact_phone']) ?></p>
+                    <p><i class="fas fa-calendar-check"></i> <?= htmlspecialchars($professor['availability']) ?></p>
+                  </div>
+                  <a href="professor_details.php?id=<?= $professor['id'] ?>" class="profile-btn">
+                    View Full Profile <i class="fas fa-arrow-right"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        <?php endforeach; ?>
+      <?php else: ?>
+        <div class="no-professors">No professors found in database</div>
+      <?php endif; ?>
     </div>
+  </div>
 
-    <div class="courses">
-        <!-- Card 1 -->
-        <div class="course-card">
-            <div class="course-img">
-                <img src="https://miro.medium.com/1*hPvg2PcXq02-zfc1MyjSMg.jpeg" alt="Course">
-                <div class="bookmark">🔖</div>
-            </div>
-            <div class="course-content">
-                <div class="instructor">
-                    <img src="https://shepherd.org/wp-content/uploads/2024/08/david-carter.jpg" alt="Instructor">
-                    <div class="instructor-name">Mark Evans</div>
-                </div>
-                <div class="course-title">Building Chatbots with OpenAI’s GPT</div>
-                <div class="course-info">
-                    <span>👥 2 Students</span>
-                    <span>⭐ (5.00/2)</span>
-                </div>
-                <div class="price-row">
-                    <span><span class="old-price">$49.99</span> <span class="new-price">$29.00</span></span>
-                    <a href="#" class="explore">Explore Now</a>
+  <div class="carousel-controls">
+    <button class="control-btn prev-btn" aria-label="Previous"><i class="fas fa-chevron-left"></i></button>
+    <button class="control-btn next-btn" aria-label="Next"><i class="fas fa-chevron-right"></i></button>
+  </div>
 
-                </div>
-            </div>
-        </div>
+  <div class="see-all-container">
+    <a href="professors.php" class="see-all-btn">Browse All Professors</a>
+  </div>
+</section>
 
-        <!-- Card 2 -->
-        <div class="course-card">
-            <div class="course-img">
-                <img src="https://m.media-amazon.com/images/I/71MtSqKkq3L._UF894,1000_QL80_.jpg" alt="Course">
-        
-                <div class="bookmark">🔖</div>
-            </div>
-            <div class="course-content">
-                <div class="instructor">
-                    <img src="https://crglp.com/images/people/022-CRG-David-Carter-400x400.png" alt="Instructor">
-                    <div class="instructor-name">David Carter</div>
-                </div>
-                <div class="course-title">Ethical Hacking Essentials: Cyber Security Book</div>
-                <div class="course-info">
-                    <span>👥 4 Students</span>
-                    <span>⭐ (5.00/3)</span>
-                </div>
-                <div class="price-row">
-                    <span class="new-price">$90.00</span>
-                    <a href="#" class="explore">Explore Now</a>
-                </div>
-            </div>
-        </div>
+<style>
+  /* Base Styles */
+  .professors-showcase {
+    padding: 4rem 2rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    position: relative;
+    overflow: hidden;
+  }
 
-        <!-- Card 3 -->
-        <div class="course-card">
-            <div class="course-img">
-                <img src="https://media.springernature.com/full/springer-static/cover-hires/book/978-3-030-50750-3" alt="Course">
-                
-                <div class="bookmark">🔖</div>
-            </div>
-            <div class="course-content">
-                <div class="instructor">
-                    <img src="https://collaborate.princeton.edu/files-asset/48146211/Kernighan.jpg/" alt="Instructor">
-                    <div class="instructor-name">Brain W Kernighan</div>
-                </div>
-                <div class="course-title">Programming Language</div>
-                <div class="course-info">
-                    <span>👥 7 Students</span>
-                    <span>⭐ (5.00/3)</span>
-                </div>
-                <div class="price-row">
-                    <span class="new-price">$30.00</span>
-                    <a href="#" class="explore">Explore Now</a>
-                </div>
-            </div>
-        </div>
+  .section-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
 
-        <!-- Card 4 -->
-        <div class="course-card">
-            <div class="course-img">
-                <img src="https://m.media-amazon.com/images/I/61svWgrmT0L._UF1000,1000_QL80_.jpg" alt="Course">
-                
-                <div class="bookmark">🔖</div>
-            </div>
-            <div class="course-content">
-                <div class="instructor">
-                    <img src="https://media.bizj.us/view/img/10498051/doug-becker-3*900xx2691-1512-0-406.jpg" alt="Instructor">
-                    <div class="instructor-name">Jone becker</div>
-                </div>
-                <div class="course-title">Full Stack Developer Training: Job-Ready</div>
-                <div class="course-info">
-                    <span>👥 3 Students</span>
-                    <span>⭐ (5.00/3)</span>
-                </div>
-                <div class="price-row">
-                    <span class="new-price">$29.00</span>
-                    <a href="#" class="explore">Explore Now</a>
-                </div>
-            </div>
-        </div>
-        
-        
+  .section-title {
+    font-size: 2.5rem;
+    color: #2b2d42;
+    margin-bottom: 0.5rem;
+    position: relative;
+    display: inline-block;
+  }
 
-    </div>
-</div>
+  .section-title:after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: #ef233c;
+    border-radius: 2px;
+  }
 
+  .section-subtitle {
+    color: #6c757d;
+    font-size: 1.1rem;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  /* Carousel Container */
+  .professors-carousel-container {
+    position: relative;
+    padding: 1rem 0;
+    margin: 0 auto;
+    max-width: 1400px;
+  }
+
+  .professors-carousel-track {
+    display: flex;
+    gap: 1.5rem;
+    padding: 1rem;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .professors-carousel-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Professor Card */
+  .professor-card {
+    flex: 0 0 320px;
+    scroll-snap-align: start;
+    perspective: 1000px;
+    height: 420px;
+  }
+
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.8s;
+    transform-style: preserve-3d;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  }
+
+  .professor-card:hover .card-inner {
+    transform: rotateY(180deg);
+  }
+
+  .card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 15px;
+    overflow: hidden;
+  }
+
+  .card-front {
+    background: white;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card-back {
+    background: linear-gradient(135deg, #2b2d42 0%, #1a1a2e 100%);
+    color: white;
+    transform: rotateY(180deg);
+    padding: 1.5rem;
+  }
+
+  /* Front Card Styles */
+  .professor-image {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+  }
+
+  .professor-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s;
+  }
+
+  .professor-card:hover .professor-image img {
+    transform: scale(1.05);
+  }
+
+  .country-flag {
+    position: absolute;
+    bottom: -10px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 3px solid white;
+    background-size: cover;
+    background-position: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+  }
+
+  .country-flag[data-country="usa"] { background-image: url('https://flagcdn.com/w40/us.png'); }
+  .country-flag[data-country="uk"] { background-image: url('https://flagcdn.com/w40/gb.png'); }
+  .country-flag[data-country="canada"] { background-image: url('https://flagcdn.com/w40/ca.png'); }
+  /* Add more country flags as needed */
+
+  .professor-meta {
+    padding: 1.5rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .professor-name {
+    font-size: 1.4rem;
+    margin-bottom: 0.5rem;
+    color: #2b2d42;
+  }
+
+  .professor-university {
+    color: #ef233c;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+  }
+
+  .expertise-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: auto;
+  }
+
+  .tag {
+    background: #edf2f4;
+    color: #2b2d42;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  /* Back Card Styles */
+  .back-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .back-content h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    padding-bottom: 0.5rem;
+  }
+
+  .back-content h3:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 50px;
+    height: 3px;
+    background: #ef233c;
+  }
+
+  .contact-info {
+    margin-bottom: 1.5rem;
+  }
+
+  .contact-info p {
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-size: 0.95rem;
+  }
+
+  .contact-info i {
+    color: #ef233c;
+    width: 20px;
+    text-align: center;
+  }
+
+  .profile-btn {
+    margin-top: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.8rem 1.5rem;
+    background: #ef233c;
+    color: white;
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s;
+  }
+
+  .profile-btn:hover {
+    background: #d90429;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(239, 35, 60, 0.4);
+  }
+
+  /* Controls */
+  .carousel-controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .control-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: white;
+    border: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    cursor: pointer;
+    color: #2b2d42;
+    font-size: 1.2rem;
+    transition: all 0.3s;
+  }
+
+  .control-btn:hover {
+    background: #2b2d42;
+    color: white;
+    transform: translateY(-3px);
+  }
+
+  .see-all-container {
+    text-align: center;
+    margin-top: 3rem;
+  }
+
+  .see-all-btn {
+    display: inline-block;
+    padding: 0.8rem 2rem;
+    background: transparent;
+    color: #2b2d42;
+    border: 2px solid #2b2d42;
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s;
+  }
+
+  .see-all-btn:hover {
+    background: #2b2d42;
+    color: white;
+    transform: translateY(-3px);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .professor-card {
+      flex: 0 0 280px;
+      height: 380px;
+    }
+    
+    .professor-image {
+      height: 160px;
+    }
+    
+    .section-title {
+      font-size: 2rem;
+    }
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const carousel = document.getElementById('professorsCarousel');
+  const prevBtn = document.querySelector('.prev-btn');
+  const nextBtn = document.querySelector('.next-btn');
+  const professorCards = document.querySelectorAll('.professor-card');
+  
+  // Auto-scroll functionality
+  let autoScrollInterval;
+  const startAutoScroll = () => {
+    autoScrollInterval = setInterval(() => {
+      carousel.scrollBy({ left: 330, behavior: 'smooth' });
+      
+      // Reset to start if near end
+      if (carousel.scrollLeft + carousel.clientWidth >= carousel.scrollWidth - 100) {
+        setTimeout(() => {
+          carousel.scrollTo({ left: 0, behavior: 'smooth' });
+        }, 1000);
+      }
+    }, 3000); // Scroll every 3 seconds
+  };
+  
+  // Pause auto-scroll on hover
+  carousel.addEventListener('mouseenter', () => clearInterval(autoScrollInterval));
+  carousel.addEventListener('mouseleave', startAutoScroll);
+  
+  // Manual controls
+  prevBtn.addEventListener('click', () => {
+    carousel.scrollBy({ left: -330, behavior: 'smooth' });
+    clearInterval(autoScrollInterval);
+    setTimeout(startAutoScroll, 10000); // Resume after 10 seconds
+  });
+  
+  nextBtn.addEventListener('click', () => {
+    carousel.scrollBy({ left: 330, behavior: 'smooth' });
+    clearInterval(autoScrollInterval);
+    setTimeout(startAutoScroll, 5000); // Resume after 10 seconds
+  });
+  
+  // Start auto-scroll
+  startAutoScroll();
+  
+  // Add click effect to cards
+  professorCards.forEach(card => {
+    card.addEventListener('click', function(e) {
+      if (!e.target.closest('.profile-btn')) {
+        this.querySelector('.card-inner').style.transform = 'rotateY(180deg)';
+      }
+    });
+  });
+});
+</script>
 <!--News-->
 <section>
  <div class="container">
@@ -396,19 +819,87 @@
                     <p class="animate__animated animate__fadeInLeft animate__delay-1s">At EduLinkHub, we believe that quality education should be accessible to everyone. Our platform combines cutting-edge technology with expert instruction to deliver an unparalleled learning experience.</p>
 
                     <div class="about-stats animate__animated animate__fadeInUp animate__delay-2s">
-                        <div class="about-stat">
-                            <h3 class="counter" data-target="50000">0</h3>
-                            <p>Active Students</p>
-                        </div>
-                        <div class="about-stat">
-                            <h3 class="counter" data-target="500">0</h3>
-                            <p>Expert Instructors</p>
-                        </div>
-                        <div class="about-stat">
-                            <h3 class="counter" data-target="95">0</h3>
-                            <p>Success Rate</p>
-                        </div>
-                    </div>
+    <?php
+    // Database connection
+    $conn = new mysqli("localhost", "kabir", "admin", "edulinkhub");
+    
+    // Check connection
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+    }
+    
+    // Get counts from database
+    $studentCount = 0;
+    $instructorCount = 0;
+    $fundingCount = 0;
+    
+    // Count students from users table
+    $studentsQuery = "SELECT COUNT(id) AS total FROM users";
+    $result = $conn->query($studentsQuery);
+    if ($result && $result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $studentCount = $row['total'];
+    }
+    
+    // Count instructors from professors table
+    $instructorsQuery = "SELECT COUNT(id) AS total FROM professors";
+    $result = $conn->query($instructorsQuery);
+    if ($result && $result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $instructorCount = $row['total'];
+    }
+    
+    // Count fundings from fundings table
+    $fundingsQuery = "SELECT COUNT(id) AS total FROM fundings";
+    $result = $conn->query($fundingsQuery);
+    if ($result && $result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $fundingCount = $row['total'];
+    }
+    
+    $conn->close();
+    ?>
+    
+    <div class="about-stat">
+        <h3 class="counter" data-target="<?php echo $studentCount; ?>">0</h3>
+        <p>Active Students</p>
+    </div>
+    <div class="about-stat">
+        <h3 class="counter" data-target="<?php echo $instructorCount; ?>">0</h3>
+        <p>Expert Instructors</p>
+    </div>
+    <div class="about-stat">
+        <h3 class="counter" data-target="<?php echo $fundingCount; ?>">0</h3>
+        <p>Funding Opportunities</p>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get all counter elements
+    const counters = document.querySelectorAll('.counter');
+    const duration = 4000; // 4 seconds for slower counting
+    const frameRate = 30; // frames per second
+    
+    counters.forEach(counter => {
+        const target = parseInt(counter.getAttribute('data-target'));
+        const start = 0;
+        const increment = target / (duration / (1000 / frameRate));
+        let current = start;
+        
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                clearInterval(timer);
+                current = target;
+                counter.textContent = target.toLocaleString(); // Format number
+            } else {
+                counter.textContent = Math.floor(current).toLocaleString();
+            }
+        }, 1000 / frameRate);
+    });
+});
+</script>
                 </div>
                 <div class="about-visual animate__animated animate__fadeInRight animate__delay-1s">
                     <div class="about-image">
@@ -586,42 +1077,41 @@
 </section>
 
 
-        <?php require 'footer 1.php'; ?>
+        <?php require 'footer.php'; ?>
+        <script >const menuBox = document.getElementById('menuBox');
+  const menuOverlay = document.getElementById('menuOverlay');
+  const closeBtn = document.getElementById('closeBtn');
+  const menuLinks = document.querySelectorAll('.menu-link');
+  const sections = document.querySelectorAll('.menu-section');
+
+  // Toggle menu
+  menuBox.addEventListener('click', () => {
+    menuOverlay.classList.add('active');
+  });
+
+  closeBtn.addEventListener('click', () => {
+    menuOverlay.classList.remove('active');
+  });
+
+  // Submenu switching
+  menuLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+
+      // Remove previous active
+      menuLinks.forEach(l => l.classList.remove('active'));
+      sections.forEach(s => s.classList.remove('active'));
+
+      // Add new active
+      const sectionId = link.getAttribute('data-section');
+      document.getElementById(sectionId).classList.add('active');
+      link.classList.add('active');
+    });
+  });
+  </script>
 
     <script>
-        // Menu Toggle
-        const menuBox = document.getElementById('menuBox');
-        const menuOverlay = document.getElementById('menuOverlay');
-        const closeBtn = document.getElementById('closeBtn');
-        const menuLinks = document.querySelectorAll('.menu-link');
-        const sections = document.querySelectorAll('.menu-section');
-
-        // Toggle menu
-        menuBox.addEventListener('click', () => {
-            menuOverlay.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        });
-
-        closeBtn.addEventListener('click', () => {
-            menuOverlay.classList.remove('active');
-            document.body.style.overflow = 'auto';
-        });
-
-        // Submenu switching
-        menuLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-
-                // Remove previous active
-                menuLinks.forEach(l => l.classList.remove('active'));
-                sections.forEach(s => s.classList.remove('active'));
-
-                // Add new active
-                const sectionId = link.getAttribute('data-section');
-                document.getElementById(sectionId).classList.add('active');
-                link.classList.add('active');
-            });
-        });
+        
 
         // Counter Animation
         document.addEventListener('DOMContentLoaded', () => {
