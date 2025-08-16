@@ -474,9 +474,7 @@ $conn->close();
                 <button class="action-btn btn-primary">
                     <i class="fas fa-pencil-alt"></i> Edit Profile
                 </button>
-                <button class="action-btn btn-outline">
-                    <i class="fas fa-cog"></i> Settings
-                </button>
+               
                 <button class="action-btn btn-danger">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </button>
@@ -600,7 +598,7 @@ $conn->close();
         });
 
         // Settings button functionality
-        document.querySelector('.btn-outline').addEventListener('click', function() {
+        document.querySelector('.btn-primary').addEventListener('click', function() {
             window.location.href = '../HTML_Cient/settings1.php';
         });
 

@@ -99,7 +99,7 @@ $units = $conn->query("SELECT DISTINCT unit FROM exam_units ORDER BY unit");
 <?php require 'header.php'; ?>
 <section class="admission-hero">
     <div class="admission-content">
-      <h1>Bangladesh Public University Admission</h1>
+      <h1>Bangladesh University Admission</h1>
       <p>Explore public universities, stay updated with admission dates, and find the perfect fit for your future.</p>
       <div class="admission-buttons">
        

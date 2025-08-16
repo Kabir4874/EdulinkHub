@@ -1,14 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Professors</title>
-  <link rel="icon" href="../images/logo.png" type="image/png">
-  <link rel="stylesheet" href="../Css/professors.css" /> <!-- Reuse same style -->
-</head>
-<body>
-<?php require 'header.php'; ?>
  <?php
 // Database connection
 $conn = new mysqli("localhost", "kabir", "admin", "edulinkhub");
@@ -80,13 +69,32 @@ $result = $stmt->get_result();
 $countries = $conn->query("SELECT DISTINCT country FROM professors WHERE country IS NOT NULL ORDER BY country");
 $interests = $conn->query("SELECT DISTINCT interest FROM professor_research_interests ORDER BY interest");
 ?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Professors</title>
+  <link rel="icon" href="../images/logo.png" type="image/png">
+  <link rel="stylesheet" href="../Css/professors.css" /> <!-- Reuse same style -->
+</head>
+<body>
+<?php require 'header.php'; ?>
+
 <!-- Professors Hero Section -->
-<section class="admission-hero">
-    <div class="admission-content">
-        <h1>Global Professors Network</h1>
-        <p>Connect with renowned professors around the world to guide your academic journey.</p>
-    </div>
-</section>
+    <section class="admission-hero">
+        <!-- Floating professor icons -->
+        <img src="https://cdn-icons-png.flaticon.com/512/2784/2784487.png" class="professor-icon" style="top: 20%; left: 10%; width: 60px;">
+        <img src="https://cdn-icons-png.flaticon.com/512/2784/2784487.png" class="professor-icon" style="top: 70%; right: 15%; width: 80px;">
+        <img src="https://cdn-icons-png.flaticon.com/512/2784/2784487.png" class="professor-icon" style="bottom: 10%; left: 20%; width: 50px;">
+        
+        <div class="admission-content">
+            <h1>Global Professors Network</h1>
+            <p>Connect with renowned professors around the world to guide your academic journey.</p>
+           
+        </div>
+    </section>
 
 
 

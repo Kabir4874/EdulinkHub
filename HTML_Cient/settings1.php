@@ -198,7 +198,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
         });
 </script>
     <section class="settings-container">
-    <h2>Account Settings</h2>
+    <h2>Update Profile</h2>
     
     <?php if (isset($_SESSION['settings-success'])): ?>
         <div class="message success">
@@ -333,7 +333,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
         <!-- Submit Button -->
         <div class="form-actions">
             <button type="submit" name="submit" class="save-btn">
-                <i class="fas fa-save"></i> Update Profile
+                <i class="fas fa-save"></i> Save
             </button>
         </div>
     </form>
@@ -355,6 +355,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
     --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
     --transition: all 0.3s ease;
     --box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    
 }
 
 .settings-container {
