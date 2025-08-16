@@ -588,18 +588,18 @@ $conn->close();
             if (window.history.length > 1) {
                 window.history.back();
             } else {
-                window.location.href = '../HTML_Cient/index1.php';
+                window.location.href = '../htmlclient/index1.php';
             }
         });
 
         // Logout button functionality
         document.querySelector('.btn-danger').addEventListener('click', function() {
-            window.location.href = '../HTML_Cient/logout.php';
+            window.location.href = '../htmlclient/login.php';
         });
 
         // Settings button functionality
         document.querySelector('.btn-primary').addEventListener('click', function() {
-            window.location.href = '../HTML_Cient/settings1.php';
+            window.location.href = '../htmlclient/settings1.php';
         });
 
         // Animation on scroll

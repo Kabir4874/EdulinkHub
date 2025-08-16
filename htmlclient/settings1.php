@@ -88,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
 
     if (!empty($_SESSION['settings-error'])) {
         if ($imageFileName && is_file($uploadsDir . $imageFileName)) @unlink($uploadsDir . $imageFileName);
-        header('location: ' . ROOT_URL . 'HTML_Client/settings1.php');
+        header('location: ' . ROOT_URL . 'htmlclient/settings1.php');
         exit;
     }
 
@@ -108,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
     if (!$stmt) {
         if ($imageFileName && is_file($uploadsDir . $imageFileName)) @unlink($uploadsDir . $imageFileName);
         $_SESSION['settings-error'] = 'Database error (prepare failed).';
-        header('location: ' . ROOT_URL . 'HTML_Client/settings1.php');
+        header('location: ' . ROOT_URL . 'htmlclient/settings1.php');
         exit;
     }
 
@@ -132,14 +132,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
         if ($imageFileName && is_file($uploadsDir . $imageFileName)) @unlink($uploadsDir . $imageFileName);
         $_SESSION['settings-error'] = 'Failed to update profile. (' . mysqli_error($conn) . ')';
         mysqli_stmt_close($stmt);
-        header('location: ' . ROOT_URL . 'HTML_Client/settings1.php');
+        header('location: ' . ROOT_URL . 'htmlclient/settings1.php');
         exit;
     }
 
     mysqli_stmt_close($stmt);
     unset($_SESSION['settings-data']);
     $_SESSION['settings-success'] = 'Profile updated successfully.';
-    header('location: ' . ROOT_URL . 'HTML_Client/settings1.php');
+    header('location: ' . ROOT_URL . 'htmlclient/profile1.php');
     exit;
 }
 ?>
@@ -193,7 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
             if (window.history.length > 1) {
                 window.history.back();
             } else {
-                window.location.href = '../HTML_Cient/index1.php';
+                window.location.href = '../htmlclient/index1.php';
             }
         });
 </script>
