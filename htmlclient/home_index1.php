@@ -220,7 +220,7 @@
     
     <div class="stat-item">
         <h3 id="country-counter">0</h3>
-        <p>Countries Available</p>
+        <p>Professors</p>
     </div>
     <div class="stat-divider"></div>
     <div class="stat-item">
@@ -311,14 +311,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="feature-icon">
                         <i class="fas fa-laptop"></i>
                     </div>
-                    <h3>Online Learning</h3>
+                    <h3>Learning</h3>
                     <p>Access courses anytime, anywhere with our flexible online platform designed for modern learners.</p>
                 </div>
                 <div class="feature-card animate__animated animate__fadeInUp animate__delay-1s">
                     <div class="feature-icon">
                         <i class="fas fa-chalkboard-teacher"></i>
                     </div>
-                    <h3>Expert Instructors</h3>
+                    <h3>Professors</h3>
                     <p>Learn from industry professionals with years of experience in their respective fields.</p>
                 </div>
                 <div class="feature-card animate__animated animate__fadeInUp animate__delay-2s">
@@ -895,7 +895,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
     <div class="about-stat">
         <h3 class="counter" data-target="<?php echo $instructorCount; ?>">0</h3>
-        <p>Expert Instructors</p>
+        <p>Professors</p>
     </div>
     <div class="about-stat">
         <h3 class="counter" data-target="<?php echo $fundingCount; ?>">0</h3>
@@ -1071,7 +1071,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
     <div class="content">
         <h2>A subscription that's<br>more than just classes</h2>
-        <a href="#" class="btn">Get Subscription</a>
+        <a href="payment.php" class="btn">Get Subscription</a>
     </div>
     <div class="student-img right">
         <img src="https://static.vecteezy.com/system/resources/thumbnails/031/610/037/small_2x/a-of-a-3d-cartoon-little-boy-in-class-world-students-day-images-ai-generative-photo.jpg" alt="Student 2">

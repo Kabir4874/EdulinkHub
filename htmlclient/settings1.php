@@ -333,7 +333,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
         <!-- Submit Button -->
         <div class="form-actions">
             <button type="submit" name="submit" class="save-btn">
-                <i class="fas fa-save"></i> Save
+                <i class="fas fa-save"></i><a href="profile1.php">Save</a> 
             </button>
         </div>
     </form>
