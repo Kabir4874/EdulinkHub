@@ -119,10 +119,10 @@ $bookCount = getCount($conn, "books");
                     </svg>
                 </div>
                 <div class="stat-number" data-count="<?= $professorCount ?>">0</div>
-                <div class="stat-label">Expert Guides</div>
+                <div class="stat-label">Professors</div>
             </div>
             <div class="stat-card-back">
-                <p>Learn from industry leaders and academic experts</p>
+                <p>Learn from industry leaders and academic Professors</p>
                 <div class="stat-icon-wrapper">
                     <svg viewBox="0 0 24 24">
                         <path d="M12 3L1 9l11 6 9-4.91V17h2V9M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/>

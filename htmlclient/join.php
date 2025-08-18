@@ -8,43 +8,9 @@
   <link rel="stylesheet" href="../CSS/join.css" />
 </head>
 <body>
-
+<?php require 'header.php'; ?>
   <header class="hero">
-    <nav class="navbar">
-      <div class="logo">
-        <img src="../images/logo.png" alt="EdUHub Logo" class="logo-img">
-      </div>
-      <ul class="nav-links">
-        <li><a href="../index.html">Home</a></li>
-        <li class="dropdown">
-          <a href="#">Books ▾</a>
-          <ul class="dropdown-content">
-            <li><a href="../HTML/web-development.html">Web Development</a></li>
-            <li><a href="../HTML/design-books.html">Design</a></li>
-            <li><a href="../HTML/ai-ml-books.html">AI & ML</a></li>
-            <li><a href="../HTML/admission-books.html">Admission (100+ Books)</a></li>
-            <li><a href="../HTML/public-private-job.html">Public & Private Job (100+ Books)</a></li>
-            <li><a href="../HTML/bcs-books.html">BCS (100+ Books)</a></li>
-            <li><a href="../HTML/it-software-books.html">IT & Software (100+ Books)</a></li>
-            <li><a href="../HTML/academic-books.html">Academic (100+ Books)</a></li>
-            <li><a href="../HTML/language-books.html">Language (100+ Books)</a></li>
-          </ul>
-        </li>
-        <li class="dropdown">
-          <a href="#">Study Abroad ▾</a>
-          <ul class="dropdown-content">
-            <li><a href="../HTML/professors.html">Professors</a></li>
-            <li><a href="../HTML/scholarship.html">Scholarship</a></li>
-          </ul>
-        </li>
-        <a href="../HTML/admission.html" class="btn">Admission</a>
-        <li><a href="../HTML/about-contact.html">About & Contact</a></li>
-      </ul>
-      <div class="auth-buttons">
-        <a href="../HTML/join.html" class="btn join">Join</a>
-        <a href="../HTML/login.html">Login</a> | <a href="signup.html">Sign Up</a>
-      </div>
-    </nav>
+  
 
     <section class="join-container">
       <div class="join-header">
@@ -70,7 +36,7 @@
       </div>
     </section>
   </header>
-
+<?php require 'footer.php'; ?>
   <!--Start of Tawk.to Script-->
   <script type="text/javascript">
     var Tawk_API = Tawk_API || {}, Tawk_LoadStart = new Date();

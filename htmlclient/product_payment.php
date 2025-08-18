@@ -776,7 +776,7 @@
             
             // Continue shopping button
             continueShoppingBtn.addEventListener('click', function() {
-                window.location.href = 'index.php';
+                window.location.href = 'web-development.php';
             });
             
             // Helper functions
