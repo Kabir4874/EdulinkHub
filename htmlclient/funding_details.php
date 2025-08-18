@@ -1,4 +1,8 @@
 <?php
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 // Database connection
 $conn = new mysqli("localhost", "kabir", "admin", "edulinkhub");
 

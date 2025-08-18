@@ -1,4 +1,8 @@
 <?php
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 // Database connection
 $conn = new mysqli("localhost", "kabir", "admin", "edulinkhub");
 
@@ -372,7 +376,7 @@ $fundings = $fundings_stmt->get_result();
     <?php else: ?>
         <div class="no-results">
             <p>Professor not found.</p>
-            <a href="opportunities.php" class="back-btn">Back to Opportunities</a>
+            <a href="scholarship.php" class="back-btn">Back to Opportunities</a>
         </div>
     <?php endif; ?>
 </section>

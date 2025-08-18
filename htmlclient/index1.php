@@ -1769,7 +1769,7 @@ document.addEventListener('DOMContentLoaded', startAutoScroll);
     
     <div class="cta-container">
       <p class="cta-text">Start solving your study problems today - no expensive commitments!</p>
-      <a href="#" class="see-all-btn">Get Help Now</a>
+      <a href="join.php" class="see-all-btn">Get Help Now</a>
     </div>
     
   </div>

@@ -1,9 +1,9 @@
+
 <?php
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-
 $conn = new mysqli("localhost", "kabir", "admin", "edulinkhub");
 // your code to fetch user data from database
 
@@ -1035,7 +1035,7 @@ try {
     <div class="user-dropdown">
         <a href="profile1.php"><i class="fas fa-user-circle"></i> Profile</a>
         
-        <a href="login.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        <a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </div>
 </div>
         </div>
